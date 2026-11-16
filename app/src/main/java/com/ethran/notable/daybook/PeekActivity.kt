@@ -129,7 +129,7 @@ class PeekActivity : ComponentActivity() {
         var events by remember { mutableStateOf<List<CalendarEvent>>(emptyList()) }
         var isOpening by remember { mutableStateOf(false) }
         var message by remember { mutableStateOf<String?>(null) }
-        val hasCalendar = remember { hasCalendarPermission(this) }
+        val hasCalendar = remember { hasCalendarPermission(this@PeekActivity) }
 
         LaunchedEffect(Unit) {
             events = withContext(Dispatchers.IO) { CalendarEvents.forDay(this@PeekActivity, today) }
