@@ -214,6 +214,7 @@ sealed class ToolbarAction {
     data class UpdateQuickNavOpen(val isOpen: Boolean) : ToolbarAction()
     data class SetContentsOpen(val isOpen: Boolean) : ToolbarAction()
     object ToggleBookmark : ToolbarAction()
+    object NavigateToDaybook : ToolbarAction()
 }
 
 
@@ -239,6 +240,7 @@ sealed class EditorUiEvent {
     data class NavigateToLibrary(val folderId: String?) : EditorUiEvent()
     data class NavigateToPages(val bookId: String) : EditorUiEvent()
     object NavigateToBugReport : EditorUiEvent()
+    object NavigateToDaybook : EditorUiEvent()
 }
 
 // --------------------------------------------------------
@@ -611,6 +613,8 @@ class EditorViewModel @Inject constructor(
             }
 
             ToolbarAction.ToggleBookmark -> toggleBookmark()
+
+            ToolbarAction.NavigateToDaybook -> sendUiEvent(EditorUiEvent.NavigateToDaybook)
         }
     }
 

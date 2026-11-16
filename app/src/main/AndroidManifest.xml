@@ -7,6 +7,8 @@
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
     <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
+    <!-- Read-only: shows the calendars synced to the tablet on the Today screen. -->
+    <uses-permission android:name="android.permission.READ_CALENDAR"/>
 
     <application
         android:name=".NotableApp"
@@ -41,6 +43,50 @@
                 <category android:name="android.intent.category.BROWSABLE" />
 
                 <data android:scheme="notable" />
+            </intent-filter>
+        </activity>
+
+        <!-- Extra launcher icons that open straight to Today and Digest, so each can be
+             pinned on its own (for example in the SuperBoox quick-access panel). -->
+        <activity-alias
+            android:name=".TodayShortcut"
+            android:exported="true"
+            android:label="Today"
+            android:targetActivity=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+        <activity-alias
+            android:name=".DigestShortcut"
+            android:exported="true"
+            android:label="Digest"
+            android:targetActivity=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+
+        <!-- Saves text shared or selected in other apps as a digest. No screen of its own. -->
+        <activity
+            android:name=".daybook.ShareToDigestActivity"
+            android:excludeFromRecents="true"
+            android:exported="true"
+            android:label="Save to Digest"
+            android:noHistory="true"
+            android:taskAffinity=""
+            android:theme="@android:style/Theme.Translucent.NoTitleBar">
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="text/plain" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.PROCESS_TEXT" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="text/plain" />
             </intent-filter>
         </activity>
 

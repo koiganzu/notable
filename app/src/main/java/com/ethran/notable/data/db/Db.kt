@@ -54,8 +54,8 @@ class Converters {
 
 
 @Database(
-    entities = [Folder::class, Notebook::class, Page::class, Stroke::class, Image::class, Kv::class, NotebookSyncState::class, PageSyncState::class, Heading::class, Bookmark::class],
-    version = 38,
+    entities = [Folder::class, Notebook::class, Page::class, Stroke::class, Image::class, Kv::class, NotebookSyncState::class, PageSyncState::class, Heading::class, Bookmark::class, DayPage::class, Digest::class],
+    version = 39,
     autoMigrations = [
         AutoMigration(19, 20),
         AutoMigration(20, 21),
@@ -77,7 +77,9 @@ class Converters {
         // Adds the nullable `remoteDirEtag` / `remoteDirServerKey` bulk-detection baseline columns.
         AutoMigration(36, 37),
         // Adds the `Heading` and `Bookmark` tables behind the Contents panel.
-        AutoMigration(37, 38)
+        AutoMigration(37, 38),
+        // Adds the `DayPage` and `Digest` tables behind the Today and Digest screens.
+        AutoMigration(38, 39)
     ], exportSchema = true
 )
 @TypeConverters(Converters::class)
@@ -92,6 +94,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun notebookSyncStateDao(): NotebookSyncStateDao
     abstract fun pageSyncStateDao(): PageSyncStateDao
     abstract fun markDao(): MarkDao
+    abstract fun daybookDao(): DaybookDao
 
 //    companion object {
 //        private var INSTANCE: AppDatabase? = null
@@ -189,6 +192,10 @@ object DatabaseModule {
     @Provides
     fun provideMarkDao(db: AppDatabase): MarkDao =
         db.markDao()
+
+    @Provides
+    fun provideDaybookDao(db: AppDatabase): DaybookDao =
+        db.daybookDao()
 
 
 

@@ -83,6 +83,12 @@ private fun ToolbarMenuContent(
         }
         DividerCentered()
 
+        MenuItem("Today") {
+            onAction(ToolbarAction.NavigateToDaybook)
+            onAction(ToolbarAction.ToggleMenu)
+        }
+        DividerCentered()
+
         // Headings and bookmarks
         MenuItem("Contents") {
             onAction(ToolbarAction.ToggleMenu)

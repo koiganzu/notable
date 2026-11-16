@@ -1,5 +1,7 @@
 package com.ethran.notable.navigation
 
+import com.ethran.notable.daybook.DaybookDestination
+import com.ethran.notable.daybook.DigestDestination
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
@@ -101,6 +103,16 @@ class NotableNavigator(
 
     fun goToLibrary(folderId: String?) {
         navController.navigate(LibraryDestination.createRoute(folderId))
+    }
+
+    /** Opens the Today screen; if it is already on top, stays there. */
+    fun goToDaybook() {
+        navController.navigate(DaybookDestination.route) { launchSingleTop = true }
+    }
+
+    /** Opens the Digest screen; if it is already on top, stays there. */
+    fun goToDigest() {
+        navController.navigate(DigestDestination.route) { launchSingleTop = true }
     }
 
     fun goToEditor(pageId: String, bookId: String?) {

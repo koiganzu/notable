@@ -43,6 +43,8 @@ import com.ethran.notable.editor.canvas.CanvasEventBus
 import com.ethran.notable.editor.utils.DeviceCompat
 import com.ethran.notable.io.ExportEngine
 import com.ethran.notable.navigation.DeepLink
+import com.ethran.notable.daybook.DaybookDestination
+import com.ethran.notable.daybook.DigestDestination
 import com.ethran.notable.navigation.DeepLinkResolver
 import com.ethran.notable.navigation.parseDeepLink
 import com.ethran.notable.sync.SyncScheduler
@@ -122,6 +124,10 @@ class MainActivity : ComponentActivity() {
     // One flow for the activity: a new one on each composition would restart its collector.
     private val deepLinkFlow = deepLinks.receiveAsFlow()
 
+    /** Screens asked for by the Today and Digest launcher icons; only the latest is kept. */
+    private val screenRequests = Channel<String>(Channel.CONFLATED)
+    private val screenRequestFlow = screenRequests.receiveAsFlow()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableFullScreen()
@@ -142,7 +148,10 @@ class MainActivity : ComponentActivity() {
         trackSystemGestureBlocking()
 
         // A recreated activity gets its launching intent again; that link was already opened.
-        if (savedInstanceState == null) receiveDeepLink(intent)
+        if (savedInstanceState == null) {
+            receiveDeepLink(intent)
+            receiveScreenRequest(intent)
+        }
 
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
@@ -197,6 +206,7 @@ class MainActivity : ComponentActivity() {
                             appRepository = appRepositoryLazy.get(),
                             deepLinks = deepLinkFlow,
                             deepLinkResolver = deepLinkResolver.get(),
+                            screenRequests = screenRequestFlow,
                         )
                     } else {
                         ShowInitMessage()
@@ -235,6 +245,20 @@ class MainActivity : ComponentActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         receiveDeepLink(intent)
+        receiveScreenRequest(intent)
+    }
+
+    /** The Today and Digest launcher icons are aliases of this activity; open their screen. */
+    private fun receiveScreenRequest(intent: Intent?) {
+        if (intent?.action != Intent.ACTION_MAIN) return
+        if (intent.flags and Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY != 0) return
+        val launchedAs = intent.component?.className ?: return
+        val route = when {
+            launchedAs.endsWith(".TodayShortcut") -> DaybookDestination.route
+            launchedAs.endsWith(".DigestShortcut") -> DigestDestination.route
+            else -> return
+        }
+        screenRequests.trySend(route)
     }
 
     private fun receiveDeepLink(intent: Intent) {

@@ -1,5 +1,8 @@
 package com.ethran.notable.ui.views
 
+import com.ethran.notable.daybook.InkButton
+import com.ethran.notable.daybook.DigestDestination
+import com.ethran.notable.daybook.DaybookDestination
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -120,8 +123,9 @@ fun Library(
         },
         onImportPdf = viewModel::onPdfFile,
         onImportXopp = viewModel::onXoppFile,
-        onPreviewMissing = viewModel::onPreviewRequested
-
+        onPreviewMissing = viewModel::onPreviewRequested,
+        onOpenToday = { navController.navigate(DaybookDestination.route) },
+        onOpenDigest = { navController.navigate(DigestDestination.route) },
     )
 }
 
@@ -141,11 +145,17 @@ fun LibraryContent(
     onCreateNewNotebook: () -> Unit,
     onImportPdf: (Uri, Boolean) -> Unit,
     onImportXopp: (Uri) -> Unit,
-    onPreviewMissing: (String) -> Unit
+    onPreviewMissing: (String) -> Unit,
+    onOpenToday: () -> Unit = {},
+    onOpenDigest: () -> Unit = {},
 ) {
     Column(Modifier.fillMaxSize()) {
         Topbar {
-            Row(Modifier.fillMaxWidth()) {
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                Spacer(Modifier.width(10.dp))
+                InkButton("Today") { onOpenToday() }
+                Spacer(Modifier.width(10.dp))
+                InkButton("Digest") { onOpenDigest() }
                 Spacer(modifier = Modifier.weight(1f))
                 BadgedBox(
                     badge = {

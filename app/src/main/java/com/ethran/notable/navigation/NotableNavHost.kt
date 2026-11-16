@@ -11,6 +11,10 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.ethran.notable.data.AppRepository
+import com.ethran.notable.daybook.DaybookDestination
+import com.ethran.notable.daybook.DaybookView
+import com.ethran.notable.daybook.DigestDestination
+import com.ethran.notable.daybook.DigestView
 import com.ethran.notable.editor.EditorDestination
 import com.ethran.notable.editor.EditorView
 import com.ethran.notable.io.ExportEngine
@@ -116,6 +120,7 @@ fun NotableNavHost(
                     goToLibrary = {appNavigator.goToLibrary(it)},
                     goToPages = { bookId -> appNavigator.goToPages(bookId) },
                     goToBugReport = { appNavigator.goToBugReport() },
+                    goToDaybook = { appNavigator.goToDaybook() },
                     bookId = bookId,
                     initialPageId = currentPageId,
                     isQuickNavOpen = appNavigator.isQuickNavOpen,
@@ -148,6 +153,22 @@ fun NotableNavHost(
                     onBack = { appNavigator.goBack() },
                     goToWelcome = { appNavigator.goToWelcome() },
                     goToSystemInfo = { appNavigator.goToSystemInfo() }
+                )
+                appNavigator.cleanCurrentPageId()
+            }
+            composable(route = DaybookDestination.route) {
+                DaybookView(
+                    goToLibrary = { appNavigator.goToLibrary(null) },
+                    goToDigest = { appNavigator.goToDigest() },
+                    openPage = { page -> appNavigator.goToEditor(page.pageId, page.bookId) },
+                )
+                appNavigator.cleanCurrentPageId()
+            }
+            composable(route = DigestDestination.route) {
+                DigestView(
+                    goToLibrary = { appNavigator.goToLibrary(null) },
+                    goToToday = { appNavigator.goToDaybook() },
+                    openPage = { page -> appNavigator.goToEditor(page.pageId, page.bookId) },
                 )
                 appNavigator.cleanCurrentPageId()
             }

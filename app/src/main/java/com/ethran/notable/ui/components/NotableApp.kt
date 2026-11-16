@@ -6,6 +6,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import kotlinx.coroutines.flow.emptyFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
@@ -31,6 +33,7 @@ fun NotableApp(
     appRepository: AppRepository,
     deepLinks: Flow<DeepLink>,
     deepLinkResolver: DeepLinkResolver,
+    screenRequests: Flow<String> = emptyFlow(),
 ) {
     val appNavState = rememberNotableAppState()
     DeepLinkHandler(deepLinks, deepLinkResolver, appNavState, snackDispatcher)
@@ -45,6 +48,18 @@ fun NotableApp(
             appRepository = appRepository,
             appNavigator = appNavState
         )
+
+        // Open a screen asked for from outside, such as the Today launcher icon. Skipped
+        // during first-run setup, which has to finish before anything else can open.
+        LaunchedEffect(screenRequests) {
+            screenRequests.collect { route ->
+                if (!appNavState.isOnWelcome) {
+                    runCatching {
+                        appNavState.navController.navigate(route) { launchSingleTop = true }
+                    }
+                }
+            }
+        }
 
 
         // overlays

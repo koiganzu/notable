@@ -71,6 +71,7 @@ fun EditorView(
     goToLibrary: (folderId: String?) -> Unit,
     goToPages: (bookId: String) -> Unit,
     goToBugReport: () -> Unit,
+    goToDaybook: () -> Unit = {},
 
     viewModel: EditorViewModel = hiltViewModel()
 ) {
@@ -153,6 +154,10 @@ fun EditorView(
 
                     EditorUiEvent.NavigateToBugReport -> {
                         goToBugReport()
+                    }
+
+                    EditorUiEvent.NavigateToDaybook -> {
+                        goToDaybook()
                     }
                 }
             }
