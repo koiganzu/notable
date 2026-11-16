@@ -52,7 +52,7 @@ fun ToolbarMenu(
         offset = with(density) {
             IntOffset(
                 (-10).dp.roundToPx(),
-                50.dp.roundToPx()
+                (BUTTON_SIZE + 13).dp.roundToPx()
             )
         },
         properties = PopupProperties(focusable = true),

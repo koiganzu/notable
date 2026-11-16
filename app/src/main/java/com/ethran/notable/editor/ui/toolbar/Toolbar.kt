@@ -31,6 +31,8 @@ import com.ethran.notable.editor.ui.toolbar.model.ToolbarLayout
 import com.ethran.notable.editor.ui.toolbar.model.ToolbarPen
 import com.ethran.notable.editor.utils.Pen
 import com.ethran.notable.ui.dialogs.BackgroundSelector
+import compose.icons.FeatherIcons
+import compose.icons.feathericons.Layout
 
 /**
  * Spec-driven toolbar: iterates a [ToolbarLayout] and renders each element through
@@ -92,8 +94,7 @@ fun ToolbarContent(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .height((BUTTON_SIZE + 2).dp)
-            .padding(bottom = 1.dp)
+            .height((BUTTON_SIZE + 3).dp)
     ) {
         if (settings.toolbarPosition == AppSettings.Position.Bottom) {
             HorizontalHairline()
@@ -122,8 +123,13 @@ fun ToolbarContent(
                 renderZone(layout.scrollable)
             }
 
-            // Right zone: pinned.
+            // Right zone: pinned. Page template is one tap away, not buried in the menu.
             Row {
+                ToolbarButton(
+                    vectorIcon = FeatherIcons.Layout,
+                    contentDescription = "page template",
+                    onSelect = { onAction(ToolbarAction.ToggleBackgroundSelector(true)) },
+                )
                 renderZone(layout.pinned)
             }
         }
@@ -159,7 +165,7 @@ private fun HorizontalHairline() {
     Box(
         Modifier
             .fillMaxWidth()
-            .height(1.dp)
+            .height(2.dp)
             .background(Color.Black)
     )
 }

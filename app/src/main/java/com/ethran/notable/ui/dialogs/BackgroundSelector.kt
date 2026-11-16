@@ -28,6 +28,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -111,21 +112,52 @@ fun BackgroundSelector(
     onChange: (backgroundType: String, background: String?) -> Unit,
     onClose: () -> Unit
 ) {
+    val panel = RoundedCornerShape(18.dp)
     ScaledDialog(onDismissRequest = { onClose() }) {
-        BackgroundSelectorContent(
-            initialPageBackgroundType = initialPageBackgroundType,
-            initialPageBackground = initialPageBackground,
-            initialPageNumberInPdf = initialPageNumberInPdf,
-            isNotebookBgSelector = isNotebookBgSelector,
-            notebookId = notebookId,
-            pageNumberInBook = pageNumberInBook,
-            onChange = onChange,
-            modifier = Modifier
-                .background(Color.White)
+        Column(
+            Modifier
                 .fillMaxWidth()
-                .height(550.dp)
-                .border(2.dp, Color.Black, RectangleShape)
-        )
+                .clip(panel)
+                .background(Color.White)
+                .border(3.dp, Color.Black, panel)
+        ) {
+            Row(
+                Modifier
+                    .fillMaxWidth()
+                    .padding(start = 24.dp, end = 16.dp, top = 14.dp, bottom = 10.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    if (isNotebookBgSelector) "Notebook template" else "Page template",
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.weight(1f)
+                )
+                Text(
+                    "Done",
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White,
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(50))
+                        .background(Color.Black)
+                        .clickable { onClose() }
+                        .padding(horizontal = 22.dp, vertical = 8.dp)
+                )
+            }
+            BackgroundSelectorContent(
+                initialPageBackgroundType = initialPageBackgroundType,
+                initialPageBackground = initialPageBackground,
+                initialPageNumberInPdf = initialPageNumberInPdf,
+                isNotebookBgSelector = isNotebookBgSelector,
+                notebookId = notebookId,
+                pageNumberInBook = pageNumberInBook,
+                onChange = onChange,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(680.dp)
+            )
+        }
     }
 }
 
@@ -237,7 +269,7 @@ fun BackgroundSelectorContent(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(vertical = 10.dp),
+                .padding(vertical = 2.dp),
             contentAlignment = Alignment.Center
         ) {
             FlowRow(
@@ -246,16 +278,23 @@ fun BackgroundSelectorContent(
                     .padding(horizontal = 20.dp, vertical = 10.dp),
             ) {
                 // Background Mode Buttons
-                listOf("Native", "Image", "Cover", "PDF").forEach { modeName ->
-                    EInkButton(
-                        onClick = {
-                            selectedBackgroundMode = modeName
-                        },
-                        modifier = Modifier.padding(horizontal = 5.dp),
-                        inverted = selectedBackgroundMode == modeName
-                    ) {
-                        Text(modeName)
-                    }
+                listOf(
+                    "Native" to "Templates", "Image" to "Image", "Cover" to "Cover", "PDF" to "PDF"
+                ).forEach { (modeName, label) ->
+                    val on = selectedBackgroundMode == modeName
+                    Text(
+                        label,
+                        fontSize = 17.sp,
+                        fontWeight = if (on) FontWeight.Bold else FontWeight.Normal,
+                        color = if (on) Color.White else Color.Black,
+                        modifier = Modifier
+                            .padding(horizontal = 5.dp)
+                            .clip(RoundedCornerShape(50))
+                            .background(if (on) Color.Black else Color.White)
+                            .border(2.dp, Color.Black, RoundedCornerShape(50))
+                            .clickable { selectedBackgroundMode = modeName }
+                            .padding(horizontal = 20.dp, vertical = 8.dp)
+                    )
                 }
             }
         }
@@ -376,17 +415,20 @@ fun ShowNativeOption(
     currentBackgroundType: BackgroundType,
     onBackgroundChange: (String, BackgroundType) -> Unit
 ) {
-    val nativeOptions = listOf(
+    val paperOptions = listOf(
         "blank" to stringResource(R.string.blank_page),
         "dotted" to stringResource(R.string.dot_grid),
         "lined" to stringResource(R.string.lines),
         "squared" to stringResource(R.string.small_squares_grid),
-        "hexed" to stringResource(R.string.hexagon_grid),
+        "hexed" to stringResource(R.string.hexagon_grid)
+    )
+    val salesOptions = listOf(
         "meeting" to stringResource(R.string.meeting_notes),
         "call" to stringResource(R.string.call_log),
         "cornell" to stringResource(R.string.cornell_notes),
         "todo" to stringResource(R.string.todo_list)
     )
+    val nativeOptions = paperOptions + salesOptions
 
     val context = LocalContext.current
     val backgroundFolder = File(context.filesDir, "native_backgrounds")
@@ -401,9 +443,10 @@ fun ShowNativeOption(
         }
 
         nativeOptions.forEach { (key, _) ->
-            val file = File(backgroundFolder, "$key.png")
+            // "-v2": previews are redrawn for the new picker; older cached files are ignored.
+            val file = File(backgroundFolder, "$key-v2.png")
             if (!file.exists()) {
-                val bitmap = createBitmap(300, 550)
+                val bitmap = createBitmap(300, 400)
                 val canvas = Canvas(bitmap)
 
                 when (key) {
@@ -412,8 +455,13 @@ fun ShowNativeOption(
                     "lined" -> drawLinedBg(canvas, Offset.Zero, 1f)
                     "squared" -> drawSquaredBg(canvas, Offset.Zero, 1f)
                     "hexed" -> drawHexedBg(canvas, Offset.Zero, 0.4f)
-                    "meeting", "call", "cornell", "todo" ->
+                    else -> {
+                        // Draw the whole layout shrunk to fit, so the card shows its structure.
+                        canvas.save()
+                        canvas.scale(0.4f, 0.4f)
                         drawTemplateBg(canvas, Offset.Zero, 0.4f, key)
+                        canvas.restore()
+                    }
                 }
 
                 FileOutputStream(file).use { out ->
@@ -428,70 +476,80 @@ fun ShowNativeOption(
         }
     }
 
-    Text(
-        stringResource(R.string.choose_native_template),
-        fontWeight = FontWeight.Bold,
-        modifier = Modifier.padding(8.dp)
-    )
+    val card = RoundedCornerShape(14.dp)
 
     LazyVerticalGrid(
-        columns = GridCells.Adaptive(120.dp),
+        columns = GridCells.Adaptive(150.dp),
         modifier = Modifier
             .fillMaxWidth()
-            .heightIn(max = 400.dp)
-            .padding(8.dp)
+            .heightIn(max = 580.dp)
+            .padding(4.dp)
     ) {
-        items(nativeOptions) { (value, label) ->
-            val bitmap = bitmaps[value]
+        listOf("Paper" to paperOptions, "Sales" to salesOptions).forEach { (title, options) ->
+            item(span = { GridItemSpan(maxLineSpan) }) {
+                Text(
+                    title,
+                    fontSize = 19.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(start = 8.dp, top = 10.dp, bottom = 4.dp)
+                )
+            }
+            items(options) { (value, label) ->
+                val bitmap = bitmaps[value]
+                val selected = value == currentBackground
 
-            Box(
-                modifier = Modifier
-                    .padding(6.dp)
-                    .border(
-                        width = if (value == currentBackground) 3.dp else 1.dp,
-                        color = if (value == currentBackground) Color.Black else Color.LightGray,
-                        shape = RoundedCornerShape(8.dp)
-                    )
-                    .clip(RoundedCornerShape(8.dp))
-                    .clickable { onBackgroundChange(value, currentBackgroundType) },
-                contentAlignment = Alignment.Center
-            ) {
-                if (bitmap != null) {
-                    Image(
-                        bitmap = bitmap.asImageBitmap(),
-                        contentDescription = "Preview for $label",
-                        contentScale = ContentScale.None,
+                Column(
+                    modifier = Modifier
+                        .padding(8.dp)
+                        .clip(card)
+                        .border(
+                            width = if (selected) 4.dp else 2.dp,
+                            color = if (selected) Color.Black else Color.Gray,
+                            shape = card
+                        )
+                        .clickable { onBackgroundChange(value, currentBackgroundType) },
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    if (bitmap != null) {
+                        Image(
+                            bitmap = bitmap.asImageBitmap(),
+                            contentDescription = "Preview for $label",
+                            contentScale = ContentScale.Crop,
+                            alignment = Alignment.TopCenter,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .aspectRatio(0.8f)
+                                .background(Color.White)
+                        )
+                    } else {
+                        Box(
+                            Modifier
+                                .fillMaxWidth()
+                                .aspectRatio(0.8f)
+                                .background(Color.White),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = FeatherIcons.Loader,
+                                contentDescription = "Preview of background not loaded.",
+                                tint = Color.Gray,
+                            )
+                        }
+                    }
+
+                    Text(
+                        text = label,
+                        textAlign = TextAlign.Center,
+                        fontSize = 15.sp,
+                        fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
+                        color = if (selected) Color.White else Color.Black,
+                        maxLines = 1,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .aspectRatio(0.75f) // maintain image proportion
-                            .background(Color.White)
+                            .background(if (selected) Color.Black else Color.White)
+                            .padding(vertical = 8.dp)
                     )
-                } else {
-                    Box(
-                        Modifier
-                            .fillMaxWidth()
-                            .aspectRatio(0.75f)
-                            .background(Color.LightGray),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = FeatherIcons.Loader,
-                            contentDescription = "Preview of background not loaded.",
-                            tint = Color.Gray,
-                        )
-                    }
                 }
-
-                Text(
-                    text = label,
-                    textAlign = TextAlign.Center,
-                    fontSize = 12.sp,
-                    modifier = Modifier
-                        .align(Alignment.BottomCenter)
-                        .fillMaxWidth()
-                        .background(Color.White.copy(alpha = 0.7f))
-                        .padding(4.dp)
-                )
             }
         }
     }

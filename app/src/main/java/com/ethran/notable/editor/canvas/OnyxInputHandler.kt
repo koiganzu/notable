@@ -1,5 +1,6 @@
 package com.ethran.notable.editor.canvas
 
+import com.ethran.notable.data.datastore.BUTTON_SIZE
 import android.graphics.Color
 import android.graphics.Rect
 import android.graphics.RectF
@@ -262,7 +263,7 @@ class OnyxInputHandler(
             }
             onSurfaceInit(drawCanvas)
             val toolbarHeight =
-                if (toolbarState.isToolbarOpen) convertDpToPixel(40.dp, drawCanvas.context).toInt() else 0
+                if (toolbarState.isToolbarOpen) convertDpToPixel((BUTTON_SIZE + 3).dp, drawCanvas.context).toInt() else 0
             setupSurface(drawCanvas, touchHelper, toolbarHeight)
             // Armed inside the same coroutine, after the session is recreated: a caller that sets
             // the pen style right after updateActiveSurface() would otherwise race this launch.

@@ -1,5 +1,7 @@
 package com.ethran.notable.editor.ui.toolbar
 
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -54,11 +56,11 @@ fun StrokeMenu(
 
     val columnModifier =
         if (GlobalAppSettings.current.continuousStrokeSlider) Modifier
-            .background(Color.White)
-            .border(1.dp, Color.Black)
+            .background(Color.White, RoundedCornerShape(14.dp))
+            .border(2.dp, Color.Black, RoundedCornerShape(14.dp))
         else Modifier
     ScaledPopup(
-        offset = with(density) { IntOffset(0, 43.dp.roundToPx()) },
+        offset = with(density) { IntOffset(0, (BUTTON_SIZE + 6).dp.roundToPx()) },
         onDismissRequest = { onClose() },
         properties = PopupProperties(focusable = true),
         alignment = Alignment.TopCenter
@@ -171,21 +173,23 @@ private fun ColorPicker(
     val rowModifier = if (embedded) {
         modifier.height(IntrinsicSize.Max)
     } else {
-        modifier
-            .background(Color.White)
-            .border(1.dp, Color.Black)
-            .height(IntrinsicSize.Max)
+        modifier.height(IntrinsicSize.Max)
     }
 
     Row(rowModifier) {
         colorOptions.map { color ->
             Box(
                 modifier = Modifier
+                    .padding(4.dp)
                     .size(40.dp)
-                    .background(color)
                     .border(
-                        3.dp, if (color == Color(value.color)) Color.Black else Color.Transparent
+                        3.dp,
+                        if (color == Color(value.color)) Color.Black else Color.Transparent,
+                        CircleShape
                     )
+                    .padding(5.dp)
+                    .background(color, CircleShape)
+                    .border(1.dp, Color.Black, CircleShape)
                     .clickable {
                         onChange(
                             PenSetting(
