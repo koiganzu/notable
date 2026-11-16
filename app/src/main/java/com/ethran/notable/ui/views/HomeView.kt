@@ -152,11 +152,12 @@ fun LibraryContent(
     Column(Modifier.fillMaxSize()) {
         Topbar {
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                Spacer(Modifier.width(10.dp))
+                // On the right: the folder breadcrumb is drawn over the left of this bar.
+                Spacer(modifier = Modifier.weight(1f))
                 InkButton("Today") { onOpenToday() }
                 Spacer(Modifier.width(10.dp))
                 InkButton("Digest") { onOpenDigest() }
-                Spacer(modifier = Modifier.weight(1f))
+                Spacer(Modifier.width(10.dp))
                 BadgedBox(
                     badge = {
                         if (!uiState.isLatestVersion) Badge(
