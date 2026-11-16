@@ -36,7 +36,7 @@ class ShareToDigestActivity : ComponentActivity() {
             return
         }
         if (!hasUsableStorage(this)) {
-            finishWith("Open Notable once and allow file access, then try again.")
+            finishWith("Open SuperBoox Manta once and allow file access, then try again.")
             return
         }
 
