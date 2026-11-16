@@ -10,6 +10,11 @@
     <!-- Read-only: shows the calendars synced to the tablet on the Today screen. -->
     <uses-permission android:name="android.permission.READ_CALENDAR"/>
 
+    <!-- The built-in BOOX Notes app: its notebooks are listed and opened from the Library. -->
+    <queries>
+        <package android:name="com.onyx.android.note" />
+    </queries>
+
     <application
         android:name=".NotableApp"
         android:allowBackup="true"

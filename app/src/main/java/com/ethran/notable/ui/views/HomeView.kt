@@ -1,5 +1,6 @@
 package com.ethran.notable.ui.views
 
+import com.ethran.notable.daybook.BooxNotesRow
 import com.ethran.notable.daybook.InkButton
 import com.ethran.notable.daybook.DigestDestination
 import com.ethran.notable.daybook.DaybookDestination
@@ -203,6 +204,8 @@ fun LibraryContent(
             )
 
             Spacer(Modifier.height(10.dp))
+
+            BooxNotesRow()
 
             NotebookGrid(
                 books = uiState.books,
