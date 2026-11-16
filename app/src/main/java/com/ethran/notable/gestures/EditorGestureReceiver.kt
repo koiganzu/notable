@@ -493,6 +493,10 @@ private fun resolveGesture(
 
         AppSettings.GestureAction.Redo -> ctx.actions.redo()
 
+        AppSettings.GestureAction.OpenContents -> ctx.actions.openContents()
+
+        AppSettings.GestureAction.ToggleBookmark -> ctx.actions.toggleBookmark()
+
         AppSettings.GestureAction.Select -> {
             log.i("select")
             ctx.actions.selectRectangle(rectangle)

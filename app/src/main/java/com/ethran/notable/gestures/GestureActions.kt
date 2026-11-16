@@ -28,4 +28,10 @@ interface GestureActions {
 
     /** Full canvas redraw, used after a two-finger transform gesture settles. */
     fun redrawCanvas()
+
+    /** Show the Contents panel (headings and bookmarks). */
+    fun openContents() {}
+
+    /** Bookmark the current page, or remove its bookmark. */
+    fun toggleBookmark() {}
 }

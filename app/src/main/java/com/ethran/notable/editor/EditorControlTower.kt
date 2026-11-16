@@ -247,6 +247,12 @@ class EditorControlTower(
         }
     }
 
+    override fun openContents() =
+        viewModel.onToolbarAction(ToolbarAction.SetContentsOpen(true))
+
+    override fun toggleBookmark() =
+        viewModel.onToolbarAction(ToolbarAction.ToggleBookmark)
+
     /** Adds the current selection to the notebook's Contents as a heading. */
     fun markSelectionAsHeading() = viewModel.addHeadingFromSelection()
 

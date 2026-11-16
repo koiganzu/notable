@@ -3,6 +3,7 @@ package com.ethran.notable.editor.ui
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -16,6 +17,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
@@ -94,6 +96,14 @@ private fun ContentsPanelBody(
             .border(2.dp, Color.Black, RectangleShape)
             // Swallow taps on the panel itself so they don't close it.
             .noRippleClickable { }
+            // Swipe the panel left to push it back off screen.
+            .pointerInput(Unit) {
+                var dragged = 0f
+                detectHorizontalDragGestures(
+                    onDragStart = { dragged = 0f },
+                    onDragEnd = { if (dragged < -80f) onClose() },
+                ) { _, amount -> dragged += amount }
+            }
             .padding(14.dp)
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {

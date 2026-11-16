@@ -316,6 +316,8 @@ class SettingsViewModel @Inject constructor(
         AppSettings.GestureAction.ChangeTool to R.string.gesture_action_toggle_pen_eraser,
         AppSettings.GestureAction.ToggleZen to R.string.gesture_action_toggle_zen_mode,
         AppSettings.GestureAction.Select to R.string.gesture_action_select,
+        AppSettings.GestureAction.OpenContents to "Open Contents",
+        AppSettings.GestureAction.ToggleBookmark to "Bookmark page",
     )
 
 

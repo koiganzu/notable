@@ -63,7 +63,7 @@ data class AppSettings(
     // Fired by *three*-finger swipes (two fingers are pan/zoom); the field
     // names are kept for persisted-settings compatibility.
     val twoFingerSwipeLeftAction: GestureAction = GestureAction.ToggleZen,
-    val twoFingerSwipeRightAction: GestureAction = GestureAction.ToggleZen,
+    val twoFingerSwipeRightAction: GestureAction = GestureAction.OpenContents,
     val holdAction: GestureAction = GestureAction.Select,
     val enableQuickNav: Boolean = true,
     // Onyx only: broadcast onyx.action.INTERCEPT_GESTURE while the app is resumed so
@@ -84,7 +84,8 @@ data class AppSettings(
 
     ) {
     enum class GestureAction {
-        None, Undo, Redo, PreviousPage, NextPage, ChangeTool, ToggleZen, Select
+        None, Undo, Redo, PreviousPage, NextPage, ChangeTool, ToggleZen, Select,
+        OpenContents, ToggleBookmark
     }
 
     enum class Position {
