@@ -64,6 +64,11 @@ class DaybookViewModel @Inject constructor(
         .flatMapLatest { repository.digestsForDay(it) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
+    /** The selected day's planner page, if it has been started. */
+    val plannerPageId: StateFlow<String?> = selectedDay
+        .flatMapLatest { repository.plannerPageId(it) }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+
     /** Handwriting tied to the selected day, each with its picture decoded for display. */
     val linkedNotes: StateFlow<List<LinkedNote>> = selectedDay
         .flatMapLatest { repository.linkedNotes(it) }

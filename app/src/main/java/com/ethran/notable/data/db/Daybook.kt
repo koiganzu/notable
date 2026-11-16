@@ -46,6 +46,9 @@ interface DaybookDao {
     @Query("SELECT * FROM daypage WHERE day = :day")
     suspend fun dayPage(day: String): DayPage?
 
+    @Query("SELECT * FROM daypage WHERE day = :day")
+    fun dayPageFlow(day: String): Flow<DayPage?>
+
     @Query("SELECT * FROM daypage")
     suspend fun allDayPages(): List<DayPage>
 

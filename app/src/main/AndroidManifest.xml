@@ -46,13 +46,22 @@
             </intent-filter>
         </activity>
 
-        <!-- Extra launcher icons that open straight to Today and Digest, so each can be
-             pinned on its own (for example in the SuperBoox quick-access panel). -->
+        <!-- Side panels that open over the app on screen: today's schedule, or the latest
+             digests. The Today and Digest launcher icons open them, so each can be pinned on
+             its own (for example in the SuperBoox quick-access panel) and glanced at without
+             leaving a book. -->
+        <activity
+            android:name=".daybook.PeekActivity"
+            android:excludeFromRecents="true"
+            android:exported="false"
+            android:noHistory="true"
+            android:taskAffinity=""
+            android:theme="@android:style/Theme.Translucent.NoTitleBar" />
         <activity-alias
             android:name=".TodayShortcut"
             android:exported="true"
             android:label="Today"
-            android:targetActivity=".MainActivity">
+            android:targetActivity=".daybook.PeekActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -62,7 +71,7 @@
             android:name=".DigestShortcut"
             android:exported="true"
             android:label="Digest"
-            android:targetActivity=".MainActivity">
+            android:targetActivity=".daybook.PeekActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />

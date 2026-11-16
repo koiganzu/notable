@@ -14,8 +14,12 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
@@ -34,6 +38,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ethran.notable.navigation.NavigationDestination
+import com.ethran.notable.ui.components.PagePreview
 import com.ethran.notable.ui.noRippleClickable
 import java.time.DayOfWeek
 import java.time.LocalDate
@@ -62,6 +67,7 @@ fun DaybookView(
     val digests by viewModel.digests.collectAsStateWithLifecycle()
     val noteDays by viewModel.noteDays.collectAsStateWithLifecycle()
     val linkedNotes by viewModel.linkedNotes.collectAsStateWithLifecycle()
+    val plannerPageId by viewModel.plannerPageId.collectAsStateWithLifecycle()
 
     // Re-read the calendar every time the screen comes back into view.
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { viewModel.refresh() }
@@ -103,12 +109,12 @@ fun DaybookView(
                 noteDays = noteDays,
                 onSelect = viewModel::selectDay,
             )
-            Text(
-                "•  has events      ▪  has a planner page, digest or linked note",
-                fontSize = 13.sp,
-                color = Color.DarkGray,
-                modifier = Modifier.padding(top = 6.dp)
-            )
+            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 8.dp)) {
+                DayMark(round = true, color = Color.Black)
+                Text("  events      ", fontSize = 13.sp, color = Color.DarkGray)
+                DayMark(round = false, color = Color.Black)
+                Text("  planner page, digest or linked note", fontSize = 13.sp, color = Color.DarkGray)
+            }
 
             Spacer(Modifier.height(18.dp))
             Text(
@@ -121,10 +127,27 @@ fun DaybookView(
             )
             Spacer(Modifier.height(10.dp))
             InkButton(
-                text = if (state.isOpeningPage) "Opening…" else "Open planner page",
+                text = when {
+                    state.isOpeningPage -> "Opening…"
+                    plannerPageId != null -> "Open planner page"
+                    else -> "Start planner page"
+                },
                 filled = true,
                 modifier = Modifier.fillMaxWidth(),
             ) { viewModel.openPlannerPage(openPage) }
+
+            // What's already written on the day's planner page.
+            plannerPageId?.let { pageId ->
+                Spacer(Modifier.height(10.dp))
+                PagePreview(
+                    pageId = pageId,
+                    modifier = Modifier
+                        .fillMaxWidth(0.6f)
+                        .aspectRatio(3f / 4f)
+                        .border(2.dp, Color.Black, RectangleShape)
+                        .noRippleClickable { viewModel.openPlannerPage(openPage) },
+                )
+            }
 
             state.message?.let { message ->
                 Text(message, fontSize = 15.sp, color = Color.Black, modifier = Modifier.padding(top = 8.dp))
@@ -280,6 +303,16 @@ internal fun MonthGrid(
     }
 }
 
+/** A small filled dot or square marking a calendar day. */
+@Composable
+private fun DayMark(round: Boolean, color: Color) {
+    Box(
+        Modifier
+            .size(9.dp)
+            .background(color, if (round) CircleShape else RectangleShape)
+    )
+}
+
 @Composable
 private fun DayCell(
     day: LocalDate,
@@ -305,11 +338,11 @@ private fun DayCell(
             fontWeight = if (isToday || isSelected) FontWeight.Bold else FontWeight.Normal,
             color = ink,
         )
-        Text(
-            text = (if (hasEvents) "•" else "") + (if (hasNotes) "▪" else ""),
-            fontSize = 14.sp,
-            color = ink,
-        )
+        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 3.dp)) {
+            if (hasEvents) DayMark(round = true, color = ink)
+            if (hasEvents && hasNotes) Spacer(Modifier.width(5.dp))
+            if (hasNotes) DayMark(round = false, color = ink)
+        }
     }
 }
 

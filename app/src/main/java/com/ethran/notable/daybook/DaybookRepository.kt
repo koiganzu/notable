@@ -98,6 +98,10 @@ class DaybookRepository @Inject constructor(
             }
         }
 
+    /** The id of [day]'s planner page, or null while it has none. */
+    fun plannerPageId(day: LocalDate): Flow<String?> =
+        dao.dayPageFlow(day.toString()).map { it?.pageId }
+
     /** Days in [month] that already have a planner page. */
     fun daysWithPages(month: YearMonth): Flow<Set<LocalDate>> =
         dao.daysWithPages(month.atDay(1).toString(), month.atEndOfMonth().toString())
