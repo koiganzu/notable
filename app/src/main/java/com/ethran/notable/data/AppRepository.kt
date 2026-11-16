@@ -8,6 +8,7 @@ import com.ethran.notable.data.db.FolderRepository
 import com.ethran.notable.data.db.Image
 import com.ethran.notable.data.db.ImageRepository
 import com.ethran.notable.data.db.KvProxy
+import com.ethran.notable.data.db.MarkDao
 import com.ethran.notable.data.db.NotebookSyncStateRepository
 import com.ethran.notable.data.db.Page
 import com.ethran.notable.data.db.PageRepository
