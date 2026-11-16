@@ -1,5 +1,9 @@
 package com.ethran.notable.editor.ui.toolbar
 
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.material.Text
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.Canvas
@@ -52,112 +56,121 @@ fun StrokeMenu(
     sizeOptions: List<Pair<String, Float>>,
     colorOptions: List<Color>,
 ) {
-    val density = LocalDensity.current
+    val panel = RoundedCornerShape(16.dp)
+    val panelWidth = maxOf(320, colorOptions.size * 48 + 28)
 
-    val columnModifier =
-        if (GlobalAppSettings.current.continuousStrokeSlider) Modifier
-            .background(Color.White, RoundedCornerShape(14.dp))
-            .border(2.dp, Color.Black, RoundedCornerShape(14.dp))
-        else Modifier
     ScaledPopup(
-        offset = with(density) { IntOffset(0, (BUTTON_SIZE + 6).dp.roundToPx()) },
+        offset = toolbarPopupOffset(),
         onDismissRequest = { onClose() },
         properties = PopupProperties(focusable = true),
-        alignment = Alignment.TopCenter
+        alignment = toolbarPopupAlignment()
     ) {
-
         Column(
-            modifier = columnModifier
-                .width(IntrinsicSize.Min) // match the widest child (ColorPicker Row)
-                .padding(horizontal = 10.dp, vertical = 8.dp)
-                .padding(bottom = (BUTTON_SIZE + 5).dp) // For toolbar is located at the button,
+            modifier = Modifier
+                .width(panelWidth.dp)
+                .background(Color.White, panel)
+                .border(2.dp, Color.Black, panel)
+                .padding(horizontal = 14.dp, vertical = 12.dp)
         ) {
-
-            val widthOfPicker = (35 * colorOptions.size.coerceAtLeast(5))
-            val heightOfPicker = 40
-
-            val isBottom =
-                GlobalAppSettings.current.toolbarPosition == AppSettings.Position.Bottom
-
-            if (isBottom) {
-                // Show size first, then colors
-                StrokeSizePicker(
-                    value = value,
-                    onChange = onChange,
-                    sizeOptions = sizeOptions,
-                    widthOfPicker = widthOfPicker,
-                    heightOfPicker = heightOfPicker
+            val sizes = sizeOptions.map { it.second }.distinct().sorted()
+            if (sizes.size >= 2) {
+                SliderLabel("Thickness", value.strokeSize.roundToInt().toString())
+                DiscreteThicknessSlider(
+                    value = value.strokeSize,
+                    onValueChange = { newSize ->
+                        if (newSize != value.strokeSize) {
+                            onChange(PenSetting(strokeSize = newSize, color = value.color))
+                        }
+                    },
+                    values = sizes,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(52.dp)
+                        .padding(horizontal = 6.dp, vertical = 6.dp)
                 )
+                Spacer(Modifier.height(10.dp))
+            }
 
-                Spacer(Modifier.height(6.dp))
+            // Opacity is the ink's alpha, in ten steps. The stroke settles to it once drawn.
+            val alpha = (value.color ushr 24) and 0xFF
+            val step = (alpha / 25.5f).roundToInt().coerceIn(1, 10)
+            SliderLabel("Opacity", "${step * 10}%")
+            LevelSlider(
+                level = step,
+                levels = 10,
+                onLevelChange = { newStep ->
+                    if (newStep != step) {
+                        val newAlpha = (newStep * 25.5f).roundToInt().coerceIn(1, 255)
+                        onChange(
+                            PenSetting(
+                                strokeSize = value.strokeSize,
+                                color = (value.color and 0x00FFFFFF) or (newAlpha shl 24)
+                            )
+                        )
+                    }
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(44.dp)
+                    .padding(horizontal = 6.dp)
+            )
 
+            if (colorOptions.size > 1) {
+                Spacer(Modifier.height(8.dp))
                 ColorPicker(
                     value = value,
                     onChange = onChange,
                     colorOptions = colorOptions,
-                    modifier = Modifier.align(Alignment.CenterHorizontally)
-                )
-            } else {
-                // Original order: colors first, then size
-                ColorPicker(
-                    value = value,
-                    onChange = onChange,
-                    colorOptions = colorOptions,
-                    modifier = Modifier.align(Alignment.CenterHorizontally)
-                )
-
-                Spacer(Modifier.height(6.dp))
-
-                StrokeSizePicker(
-                    value = value,
-                    onChange = onChange,
-                    sizeOptions = sizeOptions,
-                    widthOfPicker = widthOfPicker,
-                    heightOfPicker = heightOfPicker
+                    modifier = Modifier.align(Alignment.CenterHorizontally),
+                    embedded = true
                 )
             }
         }
-
-
     }
 }
 
 @Composable
-fun ColumnScope.StrokeSizePicker(
-    value: PenSetting,
-    onChange: (setting: PenSetting) -> Unit,
-    sizeOptions: List<Pair<String, Float>>,
-    widthOfPicker: Int,
-    heightOfPicker: Int = 40
-) {
+private fun SliderLabel(name: String, amount: String) {
+    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+        Text(name, fontSize = 17.sp, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
+        Text(amount, fontSize = 17.sp)
+    }
+}
 
-    // The slider needs at least two values to define a range; a single-size pen
-    // falls back to the button picker regardless of the setting.
-    if (!GlobalAppSettings.current.continuousStrokeSlider || sizeOptions.size < 2) {
-        ThicknessPicker(
-            value,
-            onChange,
-            sizeOptions,
-            modifier = Modifier.align(Alignment.CenterHorizontally)
-        )
-    } else {
-        val sizes = sizeOptions.map { it.second }
-        DiscreteThicknessSlider(
-            value = value.strokeSize,
-            onValueChange = { newSize ->
-                onChange(
-                    PenSetting(
-                        strokeSize = newSize, color = value.color
-                    )
-                )
-            },
-            values = sizes,
-            modifier = Modifier
-                .align(Alignment.CenterHorizontally)
-                .width(widthOfPicker.dp)   // shorter than full width
-                .height(heightOfPicker.dp)   // compact height
-                .padding(horizontal = 10.dp, vertical = 8.dp)
-        )
+/** A plain stepped slider: a rail, a filled part and a round handle. Tap or drag to set. */
+@Composable
+private fun LevelSlider(
+    level: Int,
+    levels: Int,
+    onLevelChange: (Int) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    fun levelAt(x: Float, width: Int): Int {
+        val fraction = (x / width.coerceAtLeast(1)).coerceIn(0f, 1f)
+        return (1 + fraction * (levels - 1)).roundToInt().coerceIn(1, levels)
+    }
+    Box(
+        modifier
+            .pointerInput(levels) {
+                detectTapGestures { onLevelChange(levelAt(it.x, size.width)) }
+            }
+            .pointerInput(levels) {
+                detectDragGestures { change, _ ->
+                    onLevelChange(levelAt(change.position.x, size.width))
+                }
+            }
+    ) {
+        Canvas(Modifier.matchParentSize()) {
+            val y = size.height / 2f
+            val handle = size.height * 0.3f
+            val start = handle
+            val end = size.width - handle
+            val x = start + (end - start) * (level - 1) / (levels - 1).coerceAtLeast(1)
+            drawLine(Color.Gray, Offset(start, y), Offset(end, y), 6f, StrokeCap.Round)
+            drawLine(Color.Black, Offset(start, y), Offset(x, y), 10f, StrokeCap.Round)
+            drawCircle(Color.White, handle + 3f, Offset(x, y))
+            drawCircle(Color.Black, handle, Offset(x, y))
+        }
     }
 }
 
@@ -184,17 +197,20 @@ private fun ColorPicker(
                     .size(40.dp)
                     .border(
                         3.dp,
-                        if (color == Color(value.color)) Color.Black else Color.Transparent,
+                        if (sameInk(color, value.color)) Color.Black else Color.Transparent,
                         CircleShape
                     )
                     .padding(5.dp)
                     .background(color, CircleShape)
                     .border(1.dp, Color.Black, CircleShape)
                     .clickable {
+                        // A solid swatch keeps the opacity already dialled in.
+                        val keep = (value.color ushr 24) and 0xFF
+                        val a = if (color.alpha >= 1f) keep else (color.alpha * 255).toInt()
                         onChange(
                             PenSetting(
                                 strokeSize = value.strokeSize, color = android.graphics.Color.argb(
-                                    (color.alpha * 255).toInt(),
+                                    a,
                                     (color.red * 255).toInt(),
                                     (color.green * 255).toInt(),
                                     (color.blue * 255).toInt()
@@ -210,6 +226,13 @@ private fun ColorPicker(
         Spacer(Modifier.height(4.dp))
     }
 
+}
+
+private fun sameInk(option: Color, ink: Int): Boolean {
+    val o = android.graphics.Color.argb(
+        255, (option.red * 255).toInt(), (option.green * 255).toInt(), (option.blue * 255).toInt()
+    )
+    return (o and 0x00FFFFFF) == (ink and 0x00FFFFFF)
 }
 
 // Old Picker

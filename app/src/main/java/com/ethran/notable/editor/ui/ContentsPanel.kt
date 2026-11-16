@@ -1,5 +1,7 @@
 package com.ethran.notable.editor.ui
 
+import kotlin.math.abs
+import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -83,20 +85,26 @@ fun ContentsPanel(
  * It stops short of the top and bottom of the screen, where the toolbar sits.
  */
 @Composable
-fun ContentsEdgeSwipe(onOpen: () -> Unit) {
+fun ContentsEdgeSwipe(onToggleToolbar: () -> Unit = {}, onOpen: () -> Unit) {
     Box(
         Modifier
             .padding(vertical = 90.dp)
             .fillMaxHeight()
-            .width(30.dp)
+            .width(34.dp)
             .pointerInput(Unit) {
-                var dragged = 0f
-                detectHorizontalDragGestures(
-                    onDragStart = { dragged = 0f },
-                    onDragEnd = { if (dragged > 50f) onOpen() },
+                var across = 0f
+                var along = 0f
+                detectDragGestures(
+                    onDragStart = { across = 0f; along = 0f },
+                    onDragEnd = {
+                        // Up or down the edge pulls the toolbar out; sideways opens Contents.
+                        if (abs(along) > 80f && abs(along) > abs(across) * 1.5f) onToggleToolbar()
+                        else if (across > 50f) onOpen()
+                    },
                 ) { change, amount ->
                     change.consume()
-                    dragged += amount
+                    across += amount.x
+                    along += amount.y
                 }
             }
     )

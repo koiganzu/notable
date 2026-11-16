@@ -1,5 +1,14 @@
 package com.ethran.notable.editor.ui.toolbar
 
+import kotlin.math.abs
+import androidx.compose.ui.Alignment
+import androidx.compose.foundation.gestures.detectVerticalDragGestures
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.runtime.compositionLocalOf
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts.PickVisualMedia
@@ -91,6 +100,62 @@ fun ToolbarContent(
         }
     }
 
+    val templateButton = @Composable {
+        ToolbarButton(
+            vectorIcon = FeatherIcons.Layout,
+            contentDescription = "page template",
+            onSelect = { onAction(ToolbarAction.ToggleBackgroundSelector(true)) },
+        )
+    }
+
+    if (settings.toolbarPosition == AppSettings.Position.Left) {
+        // Side panel: tools stacked down the left edge, page controls at the bottom.
+        CompositionLocalProvider(LocalToolbarVertical provides true) {
+            Row(Modifier.fillMaxHeight()) {
+                Column(
+                    Modifier
+                        .background(Color.White)
+                        .width((BUTTON_SIZE + 4).dp)
+                        .fillMaxHeight()
+                        // Swipe up or down along the panel to tuck it away.
+                        .pointerInput(Unit) {
+                            var dragged = 0f
+                            detectVerticalDragGestures(
+                                onDragStart = { dragged = 0f },
+                                onDragEnd = {
+                                    if (abs(dragged) > 80f) onAction(ToolbarAction.ToggleToolbar)
+                                },
+                            ) { change, amount ->
+                                change.consume()
+                                dragged += amount
+                            }
+                        },
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    ToolbarElementView(
+                        element = ToolbarElements.of(ToolbarElementId.TOGGLE),
+                        uiState = uiState,
+                        onAction = onAction,
+                        onPickImage = {},
+                    )
+                    ToolbarVerticalDivider()
+                    renderZone(layout.scrollable)
+                    Spacer(Modifier.weight(1f))
+                    ToolbarVerticalDivider()
+                    templateButton()
+                    renderZone(layout.pinned)
+                }
+                Box(
+                    Modifier
+                        .fillMaxHeight()
+                        .width(2.dp)
+                        .background(Color.Black)
+                )
+            }
+        }
+        return
+    }
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -125,11 +190,7 @@ fun ToolbarContent(
 
             // Right zone: pinned. Page template is one tap away, not buried in the menu.
             Row {
-                ToolbarButton(
-                    vectorIcon = FeatherIcons.Layout,
-                    contentDescription = "page template",
-                    onSelect = { onAction(ToolbarAction.ToggleBackgroundSelector(true)) },
-                )
+                templateButton()
                 renderZone(layout.pinned)
             }
         }
@@ -137,6 +198,9 @@ fun ToolbarContent(
         HorizontalHairline()
     }
 }
+
+/** True while the toolbar is drawn as the left side panel, so its parts can lay out to suit. */
+val LocalToolbarVertical = compositionLocalOf { false }
 
 @Composable
 private fun CollapsedToolbarButton(

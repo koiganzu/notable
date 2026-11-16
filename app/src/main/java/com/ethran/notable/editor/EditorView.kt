@@ -244,7 +244,9 @@ fun EditorView(
                 ScrollIndicator(viewModel = viewModel, page = page)
             }
             if (!toolbarState.isContentsOpen && !toolbarState.isSelectionActive) {
-                ContentsEdgeSwipe {
+                ContentsEdgeSwipe(
+                    onToggleToolbar = { viewModel.onToolbarAction(ToolbarAction.ToggleToolbar) }
+                ) {
                     viewModel.onToolbarAction(ToolbarAction.SetContentsOpen(true))
                 }
             }

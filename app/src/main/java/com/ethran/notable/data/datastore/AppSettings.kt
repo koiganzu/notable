@@ -41,7 +41,7 @@ data class AppSettings(
     val defaultNativeTemplate: String = "blank",
     val quickNavPages: List<String> = listOf(),
     val scribbleToEraseEnabled: Boolean = false,
-    val toolbarPosition: Position = Position.Top,
+    val toolbarPosition: Position = Position.Left,
     val smoothScroll: Boolean = true,
     val continuousZoom: Boolean = false,
     val continuousStrokeSlider: Boolean = false,
@@ -89,6 +89,6 @@ data class AppSettings(
     }
 
     enum class Position {
-        Top, Bottom, // Left,Right,
+        Top, Bottom, Left,
     }
 }

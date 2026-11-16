@@ -111,20 +111,26 @@ fun ToolbarElementView(
                     onSelect = onPickImage,
                 )
 
-            CustomKind.PAGE_NAV ->
+            CustomKind.PAGE_NAV -> {
+                val vertical = LocalToolbarVertical.current
                 Box(
                     contentAlignment = Alignment.Center,
-                    modifier = Modifier
+                    modifier = if (vertical) Modifier
+                        .width(BUTTON_SIZE.dp)
+                        .padding(vertical = 8.dp)
+                    else Modifier
                         .height(BUTTON_SIZE.dp)
                         .padding(horizontal = 12.dp)
                 ) {
                     Text(
                         text = uiState.pageNumberInfo,
                         fontWeight = FontWeight.Medium,
+                        fontSize = if (vertical) 13.sp else 16.sp,
                         modifier = Modifier.noRippleClickable { onAction(ToolbarAction.NavigateToPages) },
                         textAlign = TextAlign.Center
                     )
                 }
+            }
 
             CustomKind.MENU ->
                 Column {
@@ -228,20 +234,13 @@ private fun EraserSubmenu(
     uiState: ToolbarUiState,
     onAction: (ToolbarAction) -> Unit,
 ) {
-    val density = LocalDensity.current
-
     ScaledPopup(
-        offset = with(density) {
-            IntOffset(
-                0,
-                (BUTTON_SIZE + 6).dp.roundToPx()
-            )
-        },
+        offset = toolbarPopupOffset(),
         onDismissRequest = {
             onAction(ToolbarAction.ToggleEraserMenu(false))
         },
         properties = PopupProperties(focusable = true),
-        alignment = Alignment.TopCenter
+        alignment = toolbarPopupAlignment()
     ) {
         Column(
             modifier = Modifier
@@ -327,10 +326,31 @@ private fun EraserSubmenu(
 
 @Composable
 internal fun ToolbarVerticalDivider() {
-    Box(
-        Modifier
-            .fillMaxHeight()
-            .width(0.5.dp)
-            .background(Color.Black)
-    )
+    if (LocalToolbarVertical.current) {
+        Box(
+            Modifier
+                .padding(vertical = 3.dp)
+                .fillMaxWidth(0.7f)
+                .height(1.dp)
+                .background(Color.Black)
+        )
+    } else {
+        Box(
+            Modifier
+                .fillMaxHeight()
+                .width(0.5.dp)
+                .background(Color.Black)
+        )
+    }
+}
+
+/** Where a tool's pop-up opens: beside the side panel, or under the top bar. */
+@Composable
+internal fun toolbarPopupAlignment(): Alignment =
+    if (LocalToolbarVertical.current) Alignment.TopStart else Alignment.TopCenter
+
+@Composable
+internal fun toolbarPopupOffset(): IntOffset = with(LocalDensity.current) {
+    if (LocalToolbarVertical.current) IntOffset((BUTTON_SIZE + 10).dp.roundToPx(), 0)
+    else IntOffset(0, (BUTTON_SIZE + 6).dp.roundToPx())
 }

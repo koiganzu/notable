@@ -1,5 +1,8 @@
 package com.ethran.notable.editor.ui.toolbar
 
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
@@ -43,17 +46,16 @@ fun ToolbarMenu(
     onAction: (ToolbarAction) -> Unit,
 ) {
     val density = LocalDensity.current
+    val vertical = LocalToolbarVertical.current
 
     ScaledPopup(
-        alignment = Alignment.TopEnd,
+        alignment = if (vertical) Alignment.BottomStart else Alignment.TopEnd,
         onDismissRequest = {
             onAction(ToolbarAction.ToggleMenu)
         },
         offset = with(density) {
-            IntOffset(
-                (-10).dp.roundToPx(),
-                (BUTTON_SIZE + 13).dp.roundToPx()
-            )
+            if (vertical) IntOffset((BUTTON_SIZE + 10).dp.roundToPx(), 0)
+            else IntOffset((-10).dp.roundToPx(), (BUTTON_SIZE + 13).dp.roundToPx())
         },
         properties = PopupProperties(focusable = true),
     ) {
@@ -71,8 +73,9 @@ private fun ToolbarMenuContent(
 ) {
     Column(
         Modifier
-            .padding(bottom = (BUTTON_SIZE + 5).dp)
-            .border(1.dp, Color.Black, RectangleShape)
+            .padding(bottom = if (LocalToolbarVertical.current) 0.dp else (BUTTON_SIZE + 5).dp)
+            .clip(RoundedCornerShape(14.dp))
+            .border(2.dp, Color.Black, RoundedCornerShape(14.dp))
             .background(Color.White)
             .width(IntrinsicSize.Max)
     ) {
@@ -171,10 +174,11 @@ private fun MenuItem(
         Modifier
             .fillMaxWidth()
             .noRippleClickable { onClick() }
-            .padding(horizontal = 10.dp, vertical = 8.dp)
+            .padding(horizontal = 16.dp, vertical = 11.dp)
     ) {
         Text(
             text = label,
+            fontSize = 18.sp,
             color = Color.Black
         )
     }

@@ -33,7 +33,7 @@ fun PositionedToolbar(
     }
 
     when (position) {
-        AppSettings.Position.Top -> toolbar()
+        AppSettings.Position.Top, AppSettings.Position.Left -> toolbar()
         AppSettings.Position.Bottom -> {
             Column(
                 Modifier

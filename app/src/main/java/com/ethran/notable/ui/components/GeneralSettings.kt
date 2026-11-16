@@ -29,6 +29,7 @@ fun GeneralSettings(
             })
         SelectorRow(
             label = stringResource(R.string.toolbar_position), options = listOf(
+                AppSettings.Position.Left to stringResource(R.string.toolbar_position_left),
                 AppSettings.Position.Top to stringResource(R.string.toolbar_position_top),
                 AppSettings.Position.Bottom to stringResource(
                     R.string.toolbar_position_bottom

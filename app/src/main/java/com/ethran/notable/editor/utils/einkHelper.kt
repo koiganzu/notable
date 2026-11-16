@@ -154,19 +154,18 @@ fun setupSurface(view: View, touchHelper: TouchHelper?, toolbarHeight: Int) {
     val viewWidth = view.width
     val viewHeight = view.height
 
-    // Determine the exclusion area based on toolbar position
-    val excludeRect: Rect =
-        if (GlobalAppSettings.current.toolbarPosition == AppSettings.Position.Top) {
-            Rect(0, 0, viewWidth, toolbarHeight)
-        } else {
-            Rect(0, viewHeight - toolbarHeight, viewWidth, viewHeight)
-        }
+    // Keep the pen off the toolbar strip, wherever it sits. [toolbarHeight] is its thickness.
+    val (excludeRect, limitRect) = when (GlobalAppSettings.current.toolbarPosition) {
+        AppSettings.Position.Top ->
+            Rect(0, 0, viewWidth, toolbarHeight) to Rect(0, toolbarHeight, viewWidth, viewHeight)
 
-    val limitRect =
-        if (GlobalAppSettings.current.toolbarPosition == AppSettings.Position.Top)
-            Rect(0, toolbarHeight, viewWidth, viewHeight)
-        else
-            Rect(0, 0, viewWidth, viewHeight - toolbarHeight)
+        AppSettings.Position.Bottom ->
+            Rect(0, viewHeight - toolbarHeight, viewWidth, viewHeight) to
+                    Rect(0, 0, viewWidth, viewHeight - toolbarHeight)
+
+        AppSettings.Position.Left ->
+            Rect(0, 0, toolbarHeight, viewHeight) to Rect(toolbarHeight, 0, viewWidth, viewHeight)
+    }
 
     touchHelper.setLimitRect(mutableListOf(limitRect)).setExcludeRect(listOf(excludeRect))
         .openRawDrawing()
