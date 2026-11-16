@@ -159,6 +159,110 @@ fun drawHexedBg(canvas: Canvas, scroll: Offset, scale: Float) {
     }
 }
 
+private val tplLine = Paint().apply {
+    color = Color.GRAY
+    strokeWidth = 2f
+}
+private val tplHeavy = Paint().apply {
+    color = Color.BLACK
+    strokeWidth = 5f
+}
+private val tplText = Paint().apply {
+    color = Color.DKGRAY
+    textSize = 30f
+    isAntiAlias = true
+}
+private val tplBox = Paint().apply {
+    color = Color.DKGRAY
+    strokeWidth = 3f
+    style = Paint.Style.STROKE
+}
+
+/** Sales-oriented page layouts: meeting, call log, Cornell notes and a checklist. */
+fun drawTemplateBg(canvas: Canvas, scroll: Offset, scale: Float, kind: String) {
+    val w = canvas.width / scale
+    val h = canvas.height / scale
+    canvas.drawColor(Color.WHITE)
+    val sx = scroll.x
+    val sy = scroll.y
+
+    fun line(y: Float, x1: Float, x2: Float, paint: Paint = tplLine) =
+        canvas.drawLine(x1 - sx, y - sy, x2 - sx, y - sy, paint)
+
+    fun field(label: String, y: Float, x1: Float, x2: Float) {
+        line(y, x1, x2)
+        canvas.drawText(label, x1 + 6f - sx, y - 12f - sy, tplText)
+    }
+
+    fun band(label: String, y: Float, x1: Float, x2: Float) {
+        line(y, x1, x2, tplHeavy)
+        canvas.drawText(label, x1 + 6f - sx, y - 14f - sy, tplText)
+    }
+
+    fun ruled(startY: Float, x1: Float, x2: Float, boxes: Boolean = false) {
+        val first = kotlin.math.max(0, kotlin.math.floor((sy - startY) / lineHeight).toInt())
+        var y = startY + first * lineHeight
+        while (y - sy <= h) {
+            line(y, x1, x2)
+            if (boxes) {
+                val b = 36f
+                canvas.drawRect(
+                    x1 + 8f - sx, y - b - 10f - sy, x1 + 8f + b - sx, y - 10f - sy, tplBox
+                )
+            }
+            y += lineHeight
+        }
+    }
+
+    fun vertical(x: Float, y1: Float) =
+        canvas.drawLine(x - sx, y1 - sy, x - sx, h + sy + 10f - sy, tplLine)
+
+    when (kind) {
+        "meeting" -> {
+            val split = w * 0.64f
+            field("Customer", 110f, 0f, w * 0.6f)
+            field("Date", 110f, w * 0.62f, w)
+            field("Attendees", 200f, 0f, w)
+            field("Goal / topic", 290f, 0f, w)
+            band("NOTES", 370f, 0f, split)
+            band("ACTION ITEMS", 370f, split + 12f, w)
+            vertical(split + 6f, 370f)
+            ruled(370f + lineHeight, 0f, split)
+            ruled(370f + lineHeight, split + 12f, w, boxes = true)
+        }
+
+        "call" -> {
+            field("Contact", 110f, 0f, w * 0.5f)
+            field("Company", 110f, w * 0.52f, w)
+            field("Phone", 200f, 0f, w * 0.5f)
+            field("Date / time", 200f, w * 0.52f, w)
+            field("Machine / interest", 290f, 0f, w * 0.5f)
+            field("Budget / timeline", 290f, w * 0.52f, w)
+            field("Next step", 380f, 0f, w * 0.64f)
+            field("Follow-up date", 380f, w * 0.66f, w)
+            band("NOTES", 450f, 0f, w)
+            ruled(450f + lineHeight, 0f, w)
+        }
+
+        "cornell" -> {
+            val cue = w * 0.3f
+            field("Topic", 110f, 0f, w * 0.65f)
+            field("Date", 110f, w * 0.67f, w)
+            line(170f, 0f, w, tplHeavy)
+            canvas.drawText("Cues / questions", 6f - sx, 210f - sy, tplText)
+            canvas.drawText("Notes", cue + 18f - sx, 210f - sy, tplText)
+            vertical(cue, 170f)
+            ruled(170f + lineHeight, cue + 12f, w)
+        }
+
+        "todo" -> {
+            field("To do", 110f, 0f, w * 0.65f)
+            field("Date", 110f, w * 0.67f, w)
+            ruled(110f + lineHeight, 0f, w, boxes = true)
+        }
+    }
+}
+
 fun drawHexagon(canvas: Canvas, centerX: Float, centerY: Float, r: Float) {
     val path = Path()
     for (i in 0..5) {
@@ -300,6 +404,9 @@ fun drawBg(
                 "lined" -> drawLinedBg(canvas, scroll, scale)
                 "squared" -> drawSquaredBg(canvas, scroll, scale)
                 "hexed" -> drawHexedBg(canvas, scroll, scale)
+                "meeting", "call", "cornell", "todo" ->
+                    drawTemplateBg(canvas, scroll, scale, background)
+
                 else -> {
                     // Reaching the Native branch with an unknown value usually means the *type*
                     // detection misclassified a non-native background (e.g. a .pdf) as Native, not

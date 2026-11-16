@@ -20,6 +20,10 @@ fun GeneralSettings(
                 "lined" to stringResource(R.string.lines),
                 "squared" to stringResource(R.string.small_squares_grid),
                 "hexed" to stringResource(R.string.hexagon_grid),
+                "meeting" to stringResource(R.string.meeting_notes),
+                "call" to stringResource(R.string.call_log),
+                "cornell" to stringResource(R.string.cornell_notes),
+                "todo" to stringResource(R.string.todo_list),
             ), value = settings.defaultNativeTemplate, onValueChange = {
                 onSettingsChange(settings.copy(defaultNativeTemplate = it))
             })
