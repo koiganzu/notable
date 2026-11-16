@@ -1,6 +1,9 @@
 package com.ethran.notable.daybook
 
 import android.content.Context
+import android.graphics.BitmapFactory
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ethran.notable.data.db.Digest
@@ -14,6 +17,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -21,6 +26,9 @@ import kotlinx.coroutines.withContext
 import java.time.LocalDate
 import java.time.YearMonth
 import javax.inject.Inject
+
+/** A piece of handwriting tied to a day, and the page it is on. */
+data class LinkedNote(val id: String, val page: PageRef, val preview: ImageBitmap?)
 
 data class DaybookUiState(
     val today: LocalDate = LocalDate.now(),
@@ -56,10 +64,32 @@ class DaybookViewModel @Inject constructor(
         .flatMapLatest { repository.digestsForDay(it) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
-    /** Days of the shown month that have a planner page or a digest. */
+    /** Handwriting tied to the selected day, each with its picture decoded for display. */
+    val linkedNotes: StateFlow<List<LinkedNote>> = selectedDay
+        .flatMapLatest { repository.linkedNotes(it) }
+        .map { notes ->
+            notes.map { note ->
+                LinkedNote(
+                    id = note.id,
+                    page = PageRef(note.pageId, note.notebookId),
+                    preview = runCatching {
+                        BitmapFactory.decodeByteArray(note.preview, 0, note.preview.size)
+                            ?.asImageBitmap()
+                    }.getOrNull(),
+                )
+            }
+        }
+        .flowOn(Dispatchers.IO)
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
+    /** Days of the shown month that have a planner page, a digest or linked handwriting. */
     val noteDays: StateFlow<Set<LocalDate>> = shownMonth
         .flatMapLatest { month ->
-            combine(repository.daysWithPages(month), repository.daysWithDigests(month)) { a, b -> a + b }
+            combine(
+                repository.daysWithPages(month),
+                repository.daysWithDigests(month),
+                repository.daysWithLinkedNotes(month),
+            ) { pages, digests, linked -> pages + digests + linked }
         }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptySet())
 

@@ -13,9 +13,11 @@ import java.util.Date
 import java.util.UUID
 
 /**
- * A lassoed piece of handwriting marked as a heading. Headings form a notebook's table of
- * contents: each remembers the page it is on, where on that page it sits (page coordinates),
- * and a small picture of the handwriting to show in the Contents panel.
+ * A lassoed piece of handwriting marked for finding again. Each remembers the page it is on,
+ * where on that page it sits (page coordinates), and a small picture of the handwriting.
+ *
+ * [kind] says what it was marked as: a heading (the notebook's table of contents), a keyword
+ * (an index of terms), or an event, which ties the handwriting to the calendar date in [day].
  */
 @Entity(
     foreignKeys = [ForeignKey(
@@ -36,7 +38,16 @@ class Heading(
     /** PNG of the handwriting as it looked when it was marked. */
     val preview: ByteArray,
     val createdAt: Date = Date(),
-)
+    @ColumnInfo(defaultValue = KIND_HEADING) val kind: String = KIND_HEADING,
+    /** ISO date, e.g. 2026-11-16, for an event; null otherwise. */
+    @ColumnInfo(index = true) val day: String? = null,
+) {
+    companion object {
+        const val KIND_HEADING = "heading"
+        const val KIND_KEYWORD = "keyword"
+        const val KIND_EVENT = "event"
+    }
+}
 
 /** A bookmarked page. At most one per page. */
 @Entity(
@@ -66,6 +77,12 @@ interface MarkDao {
 
     @Query("SELECT * FROM heading WHERE pageId = :pageId")
     fun headingsForPage(pageId: String): Flow<List<Heading>>
+
+    @Query("SELECT * FROM heading WHERE day = :day ORDER BY createdAt")
+    fun headingsForDay(day: String): Flow<List<Heading>>
+
+    @Query("SELECT DISTINCT day FROM heading WHERE day BETWEEN :from AND :to")
+    fun daysWithHeadings(from: String, to: String): Flow<List<String>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertBookmark(bookmark: Bookmark)

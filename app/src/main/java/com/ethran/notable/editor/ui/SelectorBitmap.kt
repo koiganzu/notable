@@ -14,7 +14,10 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
@@ -29,14 +32,18 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.round
 import com.ethran.notable.R
 import com.ethran.notable.data.datastore.BUTTON_SIZE
+import com.ethran.notable.daybook.DatePickerDialog
 import com.ethran.notable.editor.EditorControlTower
 import com.ethran.notable.editor.ui.toolbar.ToolbarButton
 import com.ethran.notable.io.shareBitmap
 import com.ethran.notable.ui.noRippleClickable
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.Clipboard
+import compose.icons.feathericons.BookOpen
+import compose.icons.feathericons.Calendar
 import compose.icons.feathericons.Copy
 import compose.icons.feathericons.Hash
+import compose.icons.feathericons.Key
 import compose.icons.feathericons.Scissors
 import compose.icons.feathericons.Share2
 
@@ -52,6 +59,19 @@ fun SelectedBitmap(
 ) {
     val selectionState = controlTower.getSnapshotOfSelectionState()
     if (selectionState.selectedBitmap == null) return
+
+    // The calendar for tying the selection to a date is showing.
+    var isPickingDate by remember { mutableStateOf(false) }
+    if (isPickingDate) {
+        DatePickerDialog(
+            title = "Link this handwriting to a date",
+            onPick = { day ->
+                isPickingDate = false
+                controlTower.markSelectionAsEvent(day.toString())
+            },
+            onDismiss = { isPickingDate = false },
+        )
+    }
 
     var selectionDisplaceOffset =
         controlTower.page.applyZoom(selectionState.selectionDisplaceOffset ?: return)
@@ -103,7 +123,7 @@ fun SelectedBitmap(
 
         // TODO: improve this code
 
-        val buttonCount = if (selectionState.isResizable()) 8 else 6
+        val buttonCount = if (selectionState.isResizable()) 11 else 9
         val toolbarPadding = 4
 
         // If we can calculate offset of buttons show selection handling tools
@@ -127,6 +147,27 @@ fun SelectedBitmap(
                         isSelected = false,
                         onSelect = { controlTower.markSelectionAsHeading() },
                         contentDescription = "Mark as heading",
+                        modifier = Modifier.height(BUTTON_SIZE.dp)
+                    )
+                    ToolbarButton(
+                        vectorIcon = FeatherIcons.Key,
+                        isSelected = false,
+                        onSelect = { controlTower.markSelectionAsKeyword() },
+                        contentDescription = "Mark as keyword",
+                        modifier = Modifier.height(BUTTON_SIZE.dp)
+                    )
+                    ToolbarButton(
+                        vectorIcon = FeatherIcons.Calendar,
+                        isSelected = false,
+                        onSelect = { isPickingDate = true },
+                        contentDescription = "Link to a date",
+                        modifier = Modifier.height(BUTTON_SIZE.dp)
+                    )
+                    ToolbarButton(
+                        vectorIcon = FeatherIcons.BookOpen,
+                        isSelected = false,
+                        onSelect = { controlTower.digestSelection() },
+                        contentDescription = "Save document text to Digest",
                         modifier = Modifier.height(BUTTON_SIZE.dp)
                     )
                     ToolbarButton(

@@ -40,7 +40,7 @@ import com.ethran.notable.editor.HeadingItem
 import com.ethran.notable.editor.ToolbarAction
 import com.ethran.notable.ui.noRippleClickable
 
-private enum class ContentsTab { Headings, Bookmarks }
+private enum class ContentsTab { Headings, Keywords, Bookmarks }
 
 /**
  * Side panel listing the open notebook's headings and bookmarked pages. Tapping an entry
@@ -91,7 +91,7 @@ private fun ContentsPanelBody(
     Column(
         modifier
             .fillMaxHeight()
-            .width(380.dp)
+            .width(440.dp)
             .background(Color.White)
             .border(2.dp, Color.Black, RectangleShape)
             // Swallow taps on the panel itself so they don't close it.
@@ -128,6 +128,11 @@ private fun ContentsPanelBody(
                 modifier = Modifier.weight(1f),
             ) { tab = ContentsTab.Headings }
             TabLabel(
+                text = "Keywords (${contents.keywords.size})",
+                selected = tab == ContentsTab.Keywords,
+                modifier = Modifier.weight(1f),
+            ) { tab = ContentsTab.Keywords }
+            TabLabel(
                 text = "Bookmarks (${contents.bookmarks.size})",
                 selected = tab == ContentsTab.Bookmarks,
                 modifier = Modifier.weight(1f),
@@ -152,6 +157,20 @@ private fun ContentsPanelBody(
                             isCurrentPage = heading.pageId == currentPageId,
                             onOpen = { onJump(heading.pageId, heading.top) },
                             onDelete = { onDeleteHeading(heading.id) },
+                        )
+                    }
+                }
+
+                ContentsTab.Keywords -> {
+                    if (contents.keywords.isEmpty()) {
+                        EmptyNote("No keywords yet. Lasso a word, then tap the key button.")
+                    }
+                    contents.keywords.forEach { keyword ->
+                        HeadingRow(
+                            heading = keyword,
+                            isCurrentPage = keyword.pageId == currentPageId,
+                            onOpen = { onJump(keyword.pageId, keyword.top) },
+                            onDelete = { onDeleteHeading(keyword.id) },
                         )
                     }
                 }
@@ -196,7 +215,8 @@ private fun TabLabel(
 ) {
     Text(
         text = text,
-        fontSize = 16.sp,
+        fontSize = 14.sp,
+        maxLines = 1,
         fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
         color = if (selected) Color.White else Color.Black,
         modifier = modifier

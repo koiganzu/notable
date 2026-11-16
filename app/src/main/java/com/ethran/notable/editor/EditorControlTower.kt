@@ -5,6 +5,7 @@ import android.graphics.Bitmap
 import android.graphics.Rect
 import androidx.compose.ui.geometry.Offset
 import com.ethran.notable.data.datastore.GlobalAppSettings
+import com.ethran.notable.data.db.Heading
 import com.ethran.notable.editor.canvas.CanvasEventBus
 import com.ethran.notable.editor.state.ClipboardStore
 import com.ethran.notable.editor.state.History
@@ -255,6 +256,17 @@ class EditorControlTower(
 
     /** Adds the current selection to the notebook's Contents as a heading. */
     fun markSelectionAsHeading() = viewModel.addHeadingFromSelection()
+
+    /** Adds the current selection to the notebook's keyword index. */
+    fun markSelectionAsKeyword() =
+        viewModel.addHeadingFromSelection(kind = Heading.KIND_KEYWORD)
+
+    /** Ties the current selection to the calendar date [day] (ISO, e.g. 2026-11-16). */
+    fun markSelectionAsEvent(day: String) =
+        viewModel.addHeadingFromSelection(kind = Heading.KIND_EVENT, day = day)
+
+    /** Saves the document text under the current selection as a digest. */
+    fun digestSelection() = viewModel.digestFromSelection()
 
     fun duplicateSelection() {
         // finish ongoing movement

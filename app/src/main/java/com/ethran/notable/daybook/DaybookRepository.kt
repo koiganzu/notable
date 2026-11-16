@@ -6,6 +6,7 @@ import com.ethran.notable.data.datastore.GlobalAppSettings
 import com.ethran.notable.data.db.AppDatabase
 import com.ethran.notable.data.db.DayPage
 import com.ethran.notable.data.db.Digest
+import com.ethran.notable.data.db.Heading
 import com.ethran.notable.data.db.Image
 import com.ethran.notable.data.db.Kv
 import com.ethran.notable.data.db.Notebook
@@ -31,6 +32,13 @@ import java.util.Date
 import java.util.Locale
 import javax.inject.Inject
 import javax.inject.Singleton
+
+/** Lets code that isn't built by Hilt (such as the editor's view model helpers) reach the repository. */
+@dagger.hilt.EntryPoint
+@dagger.hilt.InstallIn(dagger.hilt.components.SingletonComponent::class)
+interface DaybookEntryPoint {
+    fun daybookRepository(): DaybookRepository
+}
 
 /** A page to open in the editor, with the notebook it belongs to. */
 data class PageRef(val pageId: String, val bookId: String?)
@@ -106,6 +114,15 @@ class DaybookRepository @Inject constructor(
         }
         return blocks
     }
+
+    /** Handwriting tied to [day] with the lasso's calendar button, oldest first. */
+    fun linkedNotes(day: LocalDate): Flow<List<Heading>> =
+        db.markDao().headingsForDay(day.toString())
+
+    /** Days in [month] that have handwriting tied to them. */
+    fun daysWithLinkedNotes(month: YearMonth): Flow<Set<LocalDate>> =
+        db.markDao().daysWithHeadings(month.atDay(1).toString(), month.atEndOfMonth().toString())
+            .map(::toDays)
 
     // ---------------------------------------------------------------- digests
 

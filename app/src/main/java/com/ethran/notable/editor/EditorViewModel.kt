@@ -17,6 +17,8 @@ import com.ethran.notable.data.PageSaver
 import com.ethran.notable.data.copyImageToDatabase
 import com.ethran.notable.data.datastore.EditorSettingCacheManager
 import com.ethran.notable.data.datastore.GlobalAppSettings
+import com.ethran.notable.daybook.DaybookEntryPoint
+import com.ethran.notable.daybook.PdfText
 import com.ethran.notable.data.db.Bookmark
 import com.ethran.notable.data.db.Heading
 import com.ethran.notable.data.db.getPageIndex
@@ -161,6 +163,8 @@ data class HeadingItem(
     /** Top of the heading on its page, in page coordinates. */
     val top: Int,
     val preview: ImageBitmap?,
+    /** One of the Heading.KIND_ values. */
+    val kind: String = Heading.KIND_HEADING,
 )
 
 /** One bookmarked page in the Contents panel. */
@@ -171,6 +175,7 @@ data class BookmarkItem(
 
 data class ContentsUiState(
     val headings: List<HeadingItem> = emptyList(),
+    val keywords: List<HeadingItem> = emptyList(),
     val bookmarks: List<BookmarkItem> = emptyList(),
     val isCurrentPageBookmarked: Boolean = false,
 )
@@ -357,21 +362,26 @@ class EditorViewModel @Inject constructor(
         val order = pageIds.withIndex().associate { (index, id) -> id to index }
         fun pageIndex(id: String) = order[id] ?: Int.MAX_VALUE
         fun pageNumber(id: String) = order[id]?.plus(1) ?: 0
+        val items = headings
+            .sortedWith(compareBy({ pageIndex(it.pageId) }, { it.top }))
+            .map { heading ->
+                HeadingItem(
+                    id = heading.id,
+                    pageId = heading.pageId,
+                    pageNumber = pageNumber(heading.pageId),
+                    top = heading.top,
+                    preview = runCatching {
+                        BitmapFactory.decodeByteArray(heading.preview, 0, heading.preview.size)
+                            ?.asImageBitmap()
+                    }.getOrNull(),
+                    kind = heading.kind,
+                )
+            }
         return ContentsUiState(
-            headings = headings
-                .sortedWith(compareBy({ pageIndex(it.pageId) }, { it.top }))
-                .map { heading ->
-                    HeadingItem(
-                        id = heading.id,
-                        pageId = heading.pageId,
-                        pageNumber = pageNumber(heading.pageId),
-                        top = heading.top,
-                        preview = runCatching {
-                            BitmapFactory.decodeByteArray(heading.preview, 0, heading.preview.size)
-                                ?.asImageBitmap()
-                        }.getOrNull(),
-                    )
-                },
+            // Handwriting tied to a date is listed with the headings: it is a place in the
+            // notebook worth jumping to, like they are.
+            headings = items.filter { it.kind != Heading.KIND_KEYWORD },
+            keywords = items.filter { it.kind == Heading.KIND_KEYWORD },
             bookmarks = bookmarks
                 .sortedBy { pageIndex(it.pageId) }
                 .map { BookmarkItem(it.pageId, pageNumber(it.pageId)) },
@@ -379,8 +389,11 @@ class EditorViewModel @Inject constructor(
         )
     }
 
-    /** Marks the current lasso selection as a heading, so it shows up in the Contents panel. */
-    fun addHeadingFromSelection() {
+    /**
+     * Marks the current lasso selection as a heading, keyword or event (see [Heading.kind]),
+     * so it shows up in the Contents panel and, for an event on [day], on the Today screen.
+     */
+    fun addHeadingFromSelection(kind: String = Heading.KIND_HEADING, day: String? = null) {
         val rect = selectionState.selectionRect
         val bitmap = selectionState.selectedBitmap
         val pageId = currentPageId
@@ -395,7 +408,7 @@ class EditorViewModel @Inject constructor(
         // Copy now: the selection's own bitmap can be replaced while we encode.
         val snapshot = runCatching { scaledForPreview(bitmap) }.getOrNull()
         if (snapshot == null) {
-            showHint("Couldn't save heading")
+            showHint("Couldn't save that")
             return
         }
         val notebookId = bookId
@@ -414,9 +427,17 @@ class EditorViewModel @Inject constructor(
                         right = rect.right + dx,
                         bottom = rect.bottom + dy,
                         preview = png,
+                        kind = kind,
+                        day = day,
                     )
                 )
-                showHint("Added to Contents")
+                showHint(
+                    when (kind) {
+                        Heading.KIND_KEYWORD -> "Added to Keywords"
+                        Heading.KIND_EVENT -> "Linked to $day"
+                        else -> "Added to Contents"
+                    }
+                )
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
@@ -432,6 +453,58 @@ class EditorViewModel @Inject constructor(
         if (source.width <= maxWidth) return source.copy(Bitmap.Config.ARGB_8888, false)
         val height = (source.height.toFloat() * maxWidth / source.width).toInt().coerceAtLeast(1)
         return Bitmap.createScaledBitmap(source, maxWidth, height, true)
+    }
+
+    /**
+     * Saves the printed text under the current selection as a digest. Works on pages whose
+     * background is an imported PDF: mark a passage with the pen, lasso the mark, tap Digest.
+     */
+    fun digestFromSelection() {
+        val rect = selectionState.selectionRect
+        val state = _toolbarState.value
+        if (rect == null) {
+            showHint("Nothing selected")
+            return
+        }
+        val type = BackgroundType.fromKey(state.backgroundType)
+        val path = state.backgroundPath
+        if ((type !is BackgroundType.Pdf && type !is BackgroundType.AutoPdf) ||
+            !path.endsWith(".pdf", ignoreCase = true)
+        ) {
+            showHint("Digest works on pages of an imported PDF", 3000)
+            return
+        }
+        val moved = selectionState.selectionDisplaceOffset
+        val area = android.graphics.Rect(rect).apply { offset(moved?.x ?: 0, moved?.y ?: 0) }
+        val pdfPage = state.backgroundPageNumber
+        val notebookId = bookId
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val metrics = context.resources.displayMetrics
+                // The PDF is drawn as wide as the screen held upright.
+                val pageWidth = minOf(metrics.widthPixels, metrics.heightPixels)
+                val text = PdfText.under(path, pdfPage, area, pageWidth)
+                when {
+                    text == null -> showHint("Couldn't read the document", 3000)
+                    text.isBlank() -> showHint("No text found there (scanned pages have none)", 3000)
+                    else -> {
+                        val title = notebookId
+                            ?.let { appRepository.bookRepository.getById(it)?.title }
+                        val source = listOfNotNull(title, "p. ${pdfPage + 1}").joinToString(", ")
+                        val saved = dagger.hilt.android.EntryPointAccessors
+                            .fromApplication(context, DaybookEntryPoint::class.java)
+                            .daybookRepository()
+                            .addDigest(text, source)
+                        showHint(if (saved != null) "Saved to Digest" else "Nothing to save")
+                    }
+                }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                log.e("Failed to save digest from selection", e)
+                showHint("Couldn't save to Digest")
+            }
+        }
     }
 
     fun deleteHeading(id: String) {

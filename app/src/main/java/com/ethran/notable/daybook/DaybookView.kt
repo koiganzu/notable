@@ -3,6 +3,7 @@ package com.ethran.notable.daybook
 import android.Manifest
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
@@ -12,6 +13,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -22,6 +24,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -58,6 +61,7 @@ fun DaybookView(
     val state by viewModel.state.collectAsStateWithLifecycle()
     val digests by viewModel.digests.collectAsStateWithLifecycle()
     val noteDays by viewModel.noteDays.collectAsStateWithLifecycle()
+    val linkedNotes by viewModel.linkedNotes.collectAsStateWithLifecycle()
 
     // Re-read the calendar every time the screen comes back into view.
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { viewModel.refresh() }
@@ -100,7 +104,7 @@ fun DaybookView(
                 onSelect = viewModel::selectDay,
             )
             Text(
-                "•  has events      ▪  has a planner page or digest",
+                "•  has events      ▪  has a planner page, digest or linked note",
                 fontSize = 13.sp,
                 color = Color.DarkGray,
                 modifier = Modifier.padding(top = 6.dp)
@@ -145,6 +149,35 @@ fun DaybookView(
                 else -> state.events.forEach { event -> EventRow(event) }
             }
 
+            if (linkedNotes.isNotEmpty()) {
+                SectionTitle("Linked notes (${linkedNotes.size})")
+                linkedNotes.forEach { note ->
+                    Column(
+                        Modifier
+                            .fillMaxWidth()
+                            .noRippleClickable { openPage(note.page) }
+                    ) {
+                        val picture = note.preview
+                        if (picture != null) {
+                            Image(
+                                bitmap = picture,
+                                contentDescription = "Linked handwriting",
+                                contentScale = ContentScale.Fit,
+                                alignment = Alignment.CenterStart,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .heightIn(max = 72.dp)
+                                    .padding(vertical = 8.dp)
+                            )
+                        } else {
+                            Text("(handwriting)", fontSize = 16.sp, color = Color.Black,
+                                modifier = Modifier.padding(vertical = 8.dp))
+                        }
+                        Hairline()
+                    }
+                }
+            }
+
             SectionTitle("Digest (${digests.size})")
             if (digests.isEmpty()) {
                 Text("Nothing saved on this day.", fontSize = 16.sp, color = Color.DarkGray)
@@ -167,7 +200,7 @@ fun DaybookView(
 }
 
 @Composable
-private fun MonthHeader(
+internal fun MonthHeader(
     month: YearMonth,
     onPrevious: () -> Unit,
     onNext: () -> Unit,
@@ -190,7 +223,7 @@ private fun MonthHeader(
 }
 
 @Composable
-private fun MonthGrid(
+internal fun MonthGrid(
     month: YearMonth,
     today: LocalDate,
     selected: LocalDate,

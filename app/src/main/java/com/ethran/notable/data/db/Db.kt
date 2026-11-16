@@ -55,7 +55,7 @@ class Converters {
 
 @Database(
     entities = [Folder::class, Notebook::class, Page::class, Stroke::class, Image::class, Kv::class, NotebookSyncState::class, PageSyncState::class, Heading::class, Bookmark::class, DayPage::class, Digest::class],
-    version = 39,
+    version = 40,
     autoMigrations = [
         AutoMigration(19, 20),
         AutoMigration(20, 21),
@@ -79,7 +79,9 @@ class Converters {
         // Adds the `Heading` and `Bookmark` tables behind the Contents panel.
         AutoMigration(37, 38),
         // Adds the `DayPage` and `Digest` tables behind the Today and Digest screens.
-        AutoMigration(38, 39)
+        AutoMigration(38, 39),
+        // Adds `kind` and `day` to `Heading`, for keywords and handwriting tied to a date.
+        AutoMigration(39, 40)
     ], exportSchema = true
 )
 @TypeConverters(Converters::class)
