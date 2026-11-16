@@ -1,0 +1,53 @@
+name: Beta build
+# Builds an installable test APK on every push to the beta branch and
+# publishes it as a pre-release, so it can be downloaded on the tablet
+# without signing in to GitHub.
+on:
+  push:
+    branches: ["beta"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: beta-build
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v6
+        with:
+          java-version: "21"
+          distribution: "temurin"
+
+      - uses: gradle/actions/setup-gradle@v6
+
+      - name: Build debug APK
+        env:
+          # Throwaway test key kept in the repo so every build has the same
+          # signature and installs over the previous one. Never use it for a
+          # real release.
+          STORE_FILE: ${{ github.workspace }}/ci/beta-debug.keystore
+          STORE_PASSWORD: android
+          KEY_ALIAS: beta
+          KEY_PASSWORD: android
+        run: ./gradlew assembleDebug
+
+      - name: Publish pre-release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="beta-${{ github.run_number }}"
+          APK="boox-mods-${TAG}.apk"
+          mv app/build/outputs/apk/debug/app-debug.apk "$APK"
+          gh release create "$TAG" "$APK" \
+            --target "${{ github.sha }}" \
+            --prerelease \
+            --title "Beta build ${{ github.run_number }}" \
+            --notes "Test build from commit ${{ github.sha }}."
