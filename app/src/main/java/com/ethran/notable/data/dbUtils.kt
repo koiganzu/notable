@@ -40,7 +40,9 @@ fun getDbDirOrNull(): File? {
 fun dbDirPath(): File {
     val documentsDir =
         Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS)
-    return File(documentsDir, "notabledb")
+    // Separate from upstream Notable's "notabledb": this fork adds its own tables, and sharing
+    // one database file would break whichever app has the older schema.
+    return File(documentsDir, "booxmodsdb")
 }
 
 fun ensureImagesFolder(): File {

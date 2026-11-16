@@ -13,11 +13,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ethran.notable.editor.canvas.CanvasEventBus
 import com.ethran.notable.editor.state.ClipboardStore
+import com.ethran.notable.editor.ui.ContentsPanel
 import com.ethran.notable.editor.ui.EditorSurface
 import com.ethran.notable.editor.ui.HorizontalScrollIndicator
 import com.ethran.notable.editor.ui.ScrollIndicator
@@ -30,10 +32,13 @@ import com.ethran.notable.ui.SnackConf
 import com.ethran.notable.ui.convertDpToPixel
 import com.ethran.notable.ui.theme.InkaTheme
 import io.shipbook.shipbooksdk.ShipBook
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 
 private val log = ShipBook.getLogger("EditorView")
 
@@ -234,6 +239,29 @@ fun EditorView(
             }
             PositionedToolbar(viewModel = viewModel)
             HorizontalScrollIndicator(viewModel = viewModel, page = page)
+            ContentsPanel(viewModel = viewModel) { targetPageId, top ->
+                viewModel.onToolbarAction(ToolbarAction.SetContentsOpen(false))
+                scope.launch {
+                    if (page.currentPageId != targetPageId) {
+                        viewModel.changePage(targetPageId)
+                        if (top == null) return@launch
+                        // Wait for the page to be on screen before scrolling within it.
+                        val arrived = withTimeoutOrNull(4_000) {
+                            while (page.currentPageId != targetPageId) delay(50)
+                            true
+                        }
+                        if (arrived != true) return@launch
+                        delay(200)
+                    }
+                    if (top != null) {
+                        // Bring the heading near the top of the screen, with a little room above.
+                        val targetScroll = (top - 60).coerceAtLeast(0)
+                        val deltaOnScreen = (targetScroll - page.scroll.y) * page.zoom
+                        // requestScroll takes a drag: dragging up (negative) scrolls the page down.
+                        editorControlTower.requestScroll(Offset(0f, -deltaOnScreen))
+                    }
+                }
+            }
         }
     }
 }

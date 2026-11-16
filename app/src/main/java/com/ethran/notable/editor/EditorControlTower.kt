@@ -247,6 +247,9 @@ class EditorControlTower(
         }
     }
 
+    /** Adds the current selection to the notebook's Contents as a heading. */
+    fun markSelectionAsHeading() = viewModel.addHeadingFromSelection()
+
     fun duplicateSelection() {
         // finish ongoing movement
         applySelectionDisplace()

@@ -1,6 +1,10 @@
 package com.ethran.notable.editor
 
 import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.asImageBitmap
 import android.net.Uri
 import androidx.compose.runtime.snapshotFlow
 import androidx.core.net.toUri
@@ -13,6 +17,8 @@ import com.ethran.notable.data.PageSaver
 import com.ethran.notable.data.copyImageToDatabase
 import com.ethran.notable.data.datastore.EditorSettingCacheManager
 import com.ethran.notable.data.datastore.GlobalAppSettings
+import com.ethran.notable.data.db.Bookmark
+import com.ethran.notable.data.db.Heading
 import com.ethran.notable.data.db.getPageIndex
 import com.ethran.notable.data.db.getParentFolder
 import com.ethran.notable.data.model.BackgroundType
@@ -44,7 +50,16 @@ import io.shipbook.shipbooksdk.ShipBook
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
@@ -52,6 +67,7 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.io.ByteArrayOutputStream
 import java.util.Date
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.inject.Inject
@@ -105,6 +121,8 @@ data class ToolbarUiState(
     val isSelectionActive: Boolean = false,
     val hasClipboard: Boolean = false,
     val isQuickNavOpen: Boolean = false,
+    /** The Contents panel (headings and bookmarks) is showing. */
+    val isContentsOpen: Boolean = false,
     /** Mirror of [CanvasEventBus.isResumed]. */
     val isResumed: Boolean = true,
     /** Mirror of [CanvasEventBus.hasWindowFocus]. */
@@ -130,8 +148,32 @@ data class ToolbarUiState(
                 !isSelectionGestureActive && !isSelectionActive &&
                 !(isMenuOpen || isEraserMenuOpen || isBackgroundSelectorModalOpen) &&
                 penMenuPresetId == null &&
-                !isQuickNavOpen
+                !isQuickNavOpen && !isContentsOpen
 }
+
+
+/** One heading in the Contents panel. */
+data class HeadingItem(
+    val id: String,
+    val pageId: String,
+    /** 1-based page number in the notebook, or 0 when unknown. */
+    val pageNumber: Int,
+    /** Top of the heading on its page, in page coordinates. */
+    val top: Int,
+    val preview: ImageBitmap?,
+)
+
+/** One bookmarked page in the Contents panel. */
+data class BookmarkItem(
+    val pageId: String,
+    val pageNumber: Int,
+)
+
+data class ContentsUiState(
+    val headings: List<HeadingItem> = emptyList(),
+    val bookmarks: List<BookmarkItem> = emptyList(),
+    val isCurrentPageBookmarked: Boolean = false,
+)
 
 
 // --------------------------------------------------------
@@ -170,6 +212,8 @@ sealed class ToolbarAction {
     object NavigateToHome : ToolbarAction()
 
     data class UpdateQuickNavOpen(val isOpen: Boolean) : ToolbarAction()
+    data class SetContentsOpen(val isOpen: Boolean) : ToolbarAction()
+    object ToggleBookmark : ToolbarAction()
 }
 
 
@@ -274,6 +318,138 @@ class EditorViewModel @Inject constructor(
     // ---- Internal document context ----
     private var bookId: String? = null
     private val currentPageId: String get() = _toolbarState.value.pageId.orEmpty()
+
+    // ---- Contents panel: headings and bookmarks of the open notebook ----
+    private val markDao get() = appRepository.markDao
+
+    /**
+     * Headings and bookmarks for the open notebook, in page order. A page outside any notebook
+     * lists only its own.
+     */
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val contentsState: StateFlow<ContentsUiState> = _toolbarState
+        .map { it.notebookId to it.pageId }
+        .distinctUntilChanged()
+        .flatMapLatest { (notebookId, pageId) ->
+            if (pageId.isNullOrEmpty()) return@flatMapLatest flowOf(ContentsUiState())
+            val headings =
+                if (notebookId != null) markDao.headingsForNotebook(notebookId)
+                else markDao.headingsForPage(pageId)
+            val bookmarks =
+                if (notebookId != null) markDao.bookmarksForNotebook(notebookId)
+                else markDao.bookmarksForPage(pageId)
+            combine(headings, bookmarks) { hs, bs -> buildContents(notebookId, pageId, hs, bs) }
+        }
+        .flowOn(Dispatchers.IO)
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ContentsUiState())
+
+    private suspend fun buildContents(
+        notebookId: String?,
+        pageId: String,
+        headings: List<Heading>,
+        bookmarks: List<Bookmark>,
+    ): ContentsUiState {
+        val pageIds = notebookId
+            ?.let { appRepository.bookRepository.getById(it)?.pageIds }
+            ?: listOf(pageId)
+        val order = pageIds.withIndex().associate { (index, id) -> id to index }
+        fun pageIndex(id: String) = order[id] ?: Int.MAX_VALUE
+        fun pageNumber(id: String) = order[id]?.plus(1) ?: 0
+        return ContentsUiState(
+            headings = headings
+                .sortedWith(compareBy({ pageIndex(it.pageId) }, { it.top }))
+                .map { heading ->
+                    HeadingItem(
+                        id = heading.id,
+                        pageId = heading.pageId,
+                        pageNumber = pageNumber(heading.pageId),
+                        top = heading.top,
+                        preview = runCatching {
+                            BitmapFactory.decodeByteArray(heading.preview, 0, heading.preview.size)
+                                ?.asImageBitmap()
+                        }.getOrNull(),
+                    )
+                },
+            bookmarks = bookmarks
+                .sortedBy { pageIndex(it.pageId) }
+                .map { BookmarkItem(it.pageId, pageNumber(it.pageId)) },
+            isCurrentPageBookmarked = bookmarks.any { it.pageId == pageId },
+        )
+    }
+
+    /** Marks the current lasso selection as a heading, so it shows up in the Contents panel. */
+    fun addHeadingFromSelection() {
+        val rect = selectionState.selectionRect
+        val bitmap = selectionState.selectedBitmap
+        val pageId = currentPageId
+        if (rect == null || bitmap == null || pageId.isEmpty()) {
+            showHint("Nothing selected")
+            return
+        }
+        // Where the selection sits now, including any drag since it was lassoed.
+        val moved = selectionState.selectionDisplaceOffset
+        val dx = moved?.x ?: 0
+        val dy = moved?.y ?: 0
+        // Copy now: the selection's own bitmap can be replaced while we encode.
+        val snapshot = runCatching { scaledForPreview(bitmap) }.getOrNull()
+        if (snapshot == null) {
+            showHint("Couldn't save heading")
+            return
+        }
+        val notebookId = bookId
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val png = ByteArrayOutputStream().use { out ->
+                    snapshot.compress(Bitmap.CompressFormat.PNG, 100, out)
+                    out.toByteArray()
+                }
+                markDao.insertHeading(
+                    Heading(
+                        pageId = pageId,
+                        notebookId = notebookId,
+                        left = rect.left + dx,
+                        top = rect.top + dy,
+                        right = rect.right + dx,
+                        bottom = rect.bottom + dy,
+                        preview = png,
+                    )
+                )
+                showHint("Added to Contents")
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                log.e("Failed to save heading", e)
+                showHint("Couldn't save heading")
+            }
+        }
+    }
+
+    /** A copy of [source] no wider than the Contents panel needs, to keep stored previews small. */
+    private fun scaledForPreview(source: Bitmap): Bitmap {
+        val maxWidth = 900
+        if (source.width <= maxWidth) return source.copy(Bitmap.Config.ARGB_8888, false)
+        val height = (source.height.toFloat() * maxWidth / source.width).toInt().coerceAtLeast(1)
+        return Bitmap.createScaledBitmap(source, maxWidth, height, true)
+    }
+
+    fun deleteHeading(id: String) {
+        viewModelScope.launch(Dispatchers.IO) { markDao.deleteHeading(id) }
+    }
+
+    private fun toggleBookmark() {
+        val pageId = currentPageId
+        if (pageId.isEmpty()) return
+        val notebookId = bookId
+        viewModelScope.launch(Dispatchers.IO) {
+            if (markDao.countBookmarks(pageId) > 0) {
+                markDao.deleteBookmark(pageId)
+                showHint("Bookmark removed")
+            } else {
+                markDao.insertBookmark(Bookmark(pageId = pageId, notebookId = notebookId))
+                showHint("Page bookmarked")
+            }
+        }
+    }
 
     // ---- Init guard ----
     private val didInitSettings = AtomicBoolean(false)
@@ -429,6 +605,12 @@ class EditorViewModel @Inject constructor(
             is ToolbarAction.UpdateQuickNavOpen -> {
                 _toolbarState.update { it.copy(isQuickNavOpen = action.isOpen) }
             }
+
+            is ToolbarAction.SetContentsOpen -> {
+                _toolbarState.update { it.copy(isContentsOpen = action.isOpen) }
+            }
+
+            ToolbarAction.ToggleBookmark -> toggleBookmark()
         }
     }
 

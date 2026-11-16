@@ -40,6 +40,9 @@ class AppRepository @Inject constructor(
     val kvProxy: KvProxy,
     private val db: AppDatabase
 ) {
+    /** Headings and bookmarks, shown in the editor's Contents panel. */
+    val markDao: MarkDao get() = db.markDao()
+
     /**
      * The atomic sync commit point, at page granularity. In one Room
      * transaction: mark the notebook synced, upsert the freshly transferred pages' [PageSyncState]

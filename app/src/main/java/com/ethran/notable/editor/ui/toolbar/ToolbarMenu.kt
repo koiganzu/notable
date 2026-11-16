@@ -83,6 +83,17 @@ private fun ToolbarMenuContent(
         }
         DividerCentered()
 
+        // Headings and bookmarks
+        MenuItem("Contents") {
+            onAction(ToolbarAction.ToggleMenu)
+            onAction(ToolbarAction.SetContentsOpen(true))
+        }
+        MenuItem("Bookmark this page (on/off)") {
+            onAction(ToolbarAction.ToggleBookmark)
+            onAction(ToolbarAction.ToggleMenu)
+        }
+        DividerCentered()
+
         // Page exports
         MenuItem(stringResource(R.string.export_page_to, "PDF")) {
             onAction(ToolbarAction.ExportPage(ExportFormat.PDF))

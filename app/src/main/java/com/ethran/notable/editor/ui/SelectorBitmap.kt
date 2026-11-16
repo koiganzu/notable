@@ -36,6 +36,7 @@ import com.ethran.notable.ui.noRippleClickable
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.Clipboard
 import compose.icons.feathericons.Copy
+import compose.icons.feathericons.Hash
 import compose.icons.feathericons.Scissors
 import compose.icons.feathericons.Share2
 
@@ -102,7 +103,7 @@ fun SelectedBitmap(
 
         // TODO: improve this code
 
-        val buttonCount = if (selectionState.isResizable()) 7 else 5
+        val buttonCount = if (selectionState.isResizable()) 8 else 6
         val toolbarPadding = 4
 
         // If we can calculate offset of buttons show selection handling tools
@@ -121,6 +122,13 @@ fun SelectedBitmap(
                         .padding(toolbarPadding.dp)
                         .height(BUTTON_SIZE.dp)
                 ) {
+                    ToolbarButton(
+                        vectorIcon = FeatherIcons.Hash,
+                        isSelected = false,
+                        onSelect = { controlTower.markSelectionAsHeading() },
+                        contentDescription = "Mark as heading",
+                        modifier = Modifier.height(BUTTON_SIZE.dp)
+                    )
                     ToolbarButton(
                         vectorIcon = FeatherIcons.Share2,
                         isSelected = false,
