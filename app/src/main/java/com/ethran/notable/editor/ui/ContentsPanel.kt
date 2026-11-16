@@ -76,6 +76,32 @@ fun ContentsPanel(
     }
 }
 
+/**
+ * An invisible strip down the left edge of the page. A one-finger swipe from it toward the
+ * middle of the screen calls [onOpen], pulling the Contents panel out from that side.
+ *
+ * It stops short of the top and bottom of the screen, where the toolbar sits.
+ */
+@Composable
+fun ContentsEdgeSwipe(onOpen: () -> Unit) {
+    Box(
+        Modifier
+            .padding(vertical = 90.dp)
+            .fillMaxHeight()
+            .width(30.dp)
+            .pointerInput(Unit) {
+                var dragged = 0f
+                detectHorizontalDragGestures(
+                    onDragStart = { dragged = 0f },
+                    onDragEnd = { if (dragged > 50f) onOpen() },
+                ) { change, amount ->
+                    change.consume()
+                    dragged += amount
+                }
+            }
+    )
+}
+
 @Composable
 private fun ContentsPanelBody(
     contents: ContentsUiState,

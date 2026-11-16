@@ -19,6 +19,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ethran.notable.editor.canvas.CanvasEventBus
 import com.ethran.notable.editor.state.ClipboardStore
+import com.ethran.notable.editor.ui.ContentsEdgeSwipe
 import com.ethran.notable.editor.ui.ContentsPanel
 import com.ethran.notable.editor.ui.EditorSurface
 import com.ethran.notable.editor.ui.HorizontalScrollIndicator
@@ -241,6 +242,11 @@ fun EditorView(
             ) {
                 Spacer(modifier = Modifier.weight(1f))
                 ScrollIndicator(viewModel = viewModel, page = page)
+            }
+            if (!toolbarState.isContentsOpen && !toolbarState.isSelectionActive) {
+                ContentsEdgeSwipe {
+                    viewModel.onToolbarAction(ToolbarAction.SetContentsOpen(true))
+                }
             }
             PositionedToolbar(viewModel = viewModel)
             HorizontalScrollIndicator(viewModel = viewModel, page = page)

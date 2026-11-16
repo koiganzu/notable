@@ -105,12 +105,12 @@ class DaybookRepository @Inject constructor(
 
     private fun plannerHeader(day: LocalDate, events: List<CalendarEvent>): List<TextBlock> {
         val title = day.format(DateTimeFormatter.ofPattern("EEEE, MMMM d, yyyy", Locale.getDefault()))
-        val blocks = mutableListOf(TextBlock(title, sizeSp = 22f, bold = true))
+        val blocks = mutableListOf(TextBlock(title, sizeSp = 24f, bold = true))
         events.take(MAX_EVENTS_ON_PAGE).forEach { event ->
-            blocks += TextBlock(eventLine(event), sizeSp = 15f)
+            blocks += TextBlock(eventLine(event), sizeSp = 18f)
         }
         if (events.size > MAX_EVENTS_ON_PAGE) {
-            blocks += TextBlock("+ ${events.size - MAX_EVENTS_ON_PAGE} more", sizeSp = 15f, grey = true)
+            blocks += TextBlock("+ ${events.size - MAX_EVENTS_ON_PAGE} more", sizeSp = 18f, grey = true)
         }
         return blocks
     }
