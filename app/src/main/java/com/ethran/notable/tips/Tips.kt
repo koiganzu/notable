@@ -58,6 +58,7 @@ object Tips {
     val all = listOf(
         Tip("lib_new", TipPlace.Library, "Tap + under Notebooks to start a notebook. Today is your planner and calendar; Digest is where saved snippets go."),
         Tip("lib_boox", TipPlace.Library, "BOOX notebooks are the ones from the tablet's own Notes app. Tapping one opens it there."),
+        Tip("lib_split", TipPlace.Library, "To read and write side by side, open your book or email, swipe down from the top right corner, tap Split Screen, then pick this app for the other half."),
         Tip("lib_template", TipPlace.Library, "Each notebook can have its own paper: dots, lines, or a sales layout such as Meeting notes."),
 
         Tip("write_tools", TipPlace.Writing, "The tools are down the left side. Tap a pen to pick it up; tap it again to set thickness and opacity."),
@@ -84,6 +85,7 @@ object Tips {
         Tip("today_calendar", TipPlace.Today, "Meetings come from the calendars synced to this tablet. If none show, add your account in the tablet's settings."),
 
         Tip("digest_save", TipPlace.Digest, "Save text here from any app: select it, tap Share, then Save to Digest. Or copy it and use Save clipboard."),
+        Tip("digest_split", TipPlace.Digest, "With a book or email in the other half of a split screen, copy a passage there and tap Save clipboard here."),
         Tip("digest_note", TipPlace.Digest, "Tap a snippet to open a page beside it for your own handwritten notes."),
     )
 
