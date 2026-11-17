@@ -29,6 +29,12 @@ interface GestureActions {
     /** Full canvas redraw, used after a two-finger transform gesture settles. */
     fun redrawCanvas()
 
+    /**
+     * Two fingers are resting on the page: the pen erases until they lift, then goes back
+     * to whatever tool it was.
+     */
+    fun setHoldErase(active: Boolean) {}
+
     /** Show the Contents panel (headings and bookmarks). */
     fun openContents() {}
 

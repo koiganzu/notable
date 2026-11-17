@@ -61,6 +61,13 @@ fun GeneralSettings(
             })
 
         SettingToggleRow(
+            label = "Hold two fingers down to erase",
+            value = settings.twoFingerHoldErase,
+            onToggle = { isChecked ->
+                onSettingsChange(settings.copy(twoFingerHoldErase = isChecked))
+            })
+
+        SettingToggleRow(
             label = "Circle handwriting to lasso it",
             value = settings.circleToSelect,
             onToggle = { isChecked ->

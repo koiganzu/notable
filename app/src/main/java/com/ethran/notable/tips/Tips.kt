@@ -63,7 +63,7 @@ object Tips {
         Tip("write_tools", TipPlace.Writing, "The tools are down the left side. Tap a pen to pick it up; tap it again to set thickness and opacity."),
         Tip("write_hide", TipPlace.Writing, "Swipe up or down on the tool panel to tuck it away and get the whole page."),
         Tip("write_circle", TipPlace.Writing, "Draw a loop around something you wrote to select it. No need to switch tools."),
-        Tip("write_swap", TipPlace.Writing, "Tap with two fingers to swap between pen and eraser."),
+        Tip("write_swap", TipPlace.Writing, "Rest two fingers on the page and the pen erases until you lift them. A quick two-finger tap swaps pen and eraser for good."),
         Tip("write_pens", TipPlace.Writing, "The + after the pens adds another: fountain pen, pencil, brush, marker, highlighter."),
         Tip("write_template", TipPlace.Writing, "The layout button near the bottom of the panel changes this page's paper."),
         Tip("write_pages", TipPlace.Writing, "Swipe left or right with one finger to turn the page."),

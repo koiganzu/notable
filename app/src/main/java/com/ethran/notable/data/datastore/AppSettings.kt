@@ -43,6 +43,7 @@ data class AppSettings(
     val scribbleToEraseEnabled: Boolean = false,
     val circleToSelect: Boolean = true,
     val showTips: Boolean = true,
+    val twoFingerHoldErase: Boolean = true,
     val toolbarPosition: Position = Position.Left,
     val smoothScroll: Boolean = true,
     val continuousZoom: Boolean = false,

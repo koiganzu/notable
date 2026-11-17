@@ -129,6 +129,22 @@ class EditorControlTower(
         viewModel.onToolbarAction(ToolbarAction.ChangeMode(if (mode == Mode.Draw) Mode.Erase else Mode.Draw))
     }
 
+    // The tool in hand before a two-finger hold turned the pen into an eraser.
+    private var modeBeforeHoldErase: Mode? = null
+
+    override fun setHoldErase(active: Boolean) {
+        if (active) {
+            val mode = viewModel.toolbarState.value.mode
+            if (mode == Mode.Erase || modeBeforeHoldErase != null) return
+            modeBeforeHoldErase = mode
+            viewModel.onToolbarAction(ToolbarAction.ChangeMode(Mode.Erase))
+        } else {
+            val previous = modeBeforeHoldErase ?: return
+            modeBeforeHoldErase = null
+            viewModel.onToolbarAction(ToolbarAction.ChangeMode(previous))
+        }
+    }
+
     override fun toggleZen() {
         viewModel.onToolbarAction(ToolbarAction.ToggleToolbar)
     }

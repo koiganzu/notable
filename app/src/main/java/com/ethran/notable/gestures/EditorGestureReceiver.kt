@@ -68,6 +68,9 @@ private class GestureContext(
 private class Recognizer {
     val tracker = PointerTracker(now = { SystemClock.uptimeMillis() })
     var mode: GestureMode = GestureMode.Normal
+
+    /** Two fingers have been resting still: the pen is an eraser until they lift. */
+    var holdErase = false
 }
 
 private enum class TrackResult { Completed, Aborted, ConsumedByOther }
@@ -124,6 +127,8 @@ fun EditorGestureReceiver(
                             TrackResult.Completed -> {}
                         }
 
+                        // A two-finger hold was the whole gesture; the finally block ends it.
+                        if (recognizer.holdErase) return@awaitEachGesture
                         if (finishModalGesture(recognizer, ctx)) return@awaitEachGesture
                         if (ctx.shouldAbort()) return@awaitEachGesture
 
@@ -141,7 +146,13 @@ fun EditorGestureReceiver(
                         // outlive the gesture (the arbiter's contract) and
                         // Selection UI state can't get stuck. No-op when the
                         // gesture already finished normally.
-                        recognizer?.let { cleanupGesture(it, ctx) }
+                        recognizer?.let {
+                            if (it.holdErase) {
+                                it.holdErase = false
+                                ctx.actions.setHoldErase(false)
+                            }
+                            cleanupGesture(it, ctx)
+                        }
                     }
                 }
             }
@@ -216,6 +227,18 @@ private suspend fun AwaitPointerEventScope.trackGesture(
 /** Detects mode entry (Selection/Scroll/Transform) and applies it. */
 private fun applyModeTransitions(recognizer: Recognizer, ctx: GestureContext) {
     val tracker = recognizer.tracker
+    if (recognizer.holdErase) return
+    // Two fingers set down and kept still: erase with the pen while they stay.
+    if (ctx.appSettings.twoFingerHoldErase && recognizer.mode == GestureMode.Normal &&
+        tracker.maxConcurrentPressed == 2 && tracker.pressedCount() == 2 &&
+        tracker.elapsedSinceStart() >= HOLD_THRESHOLD_MS &&
+        tracker.totalTravel() < ctx.thresholds.tapMovementTolerancePx * 2
+    ) {
+        recognizer.holdErase = true
+        ctx.actions.setHoldErase(true)
+        ctx.actions.showHint("Erasing while you hold")
+        return
+    }
     if (recognizer.mode == GestureMode.Selection) {
         ctx.updateSelectionCues(
             tracker.lastPosition()?.toIntOffset(),
