@@ -230,3 +230,30 @@ fun cleanAllStrokes(
     page.drawAreaScreenCoordinates(screenArea = effectedArea)
     return effectedArea
 }
+
+/**
+ * True when [touchPoints] is one closed loop drawn around handwriting already on the page: the
+ * pen comes back to where it started and the loop holds at least one stroke. A loop around
+ * nothing (a letter O, a zero, an empty box) is not one, so it is drawn as ink.
+ */
+fun isCircleAroundStrokes(page: PageView, touchPoints: List<StrokePoint>, pen: Pen): Boolean {
+    if (!GlobalAppSettings.current.circleToSelect) return false
+    if (pen == Pen.MARKER) return false // highlighting over words must stay highlighting
+    if (touchPoints.size < 20) return false
+    val box = calculateBoundingBox(touchPoints) { Pair(it.x, it.y) }
+    val width = box.width()
+    val height = box.height()
+    if (width < 70f || height < 50f) return false
+
+    val first = touchPoints.first()
+    val last = touchPoints.last()
+    val gap = kotlin.math.hypot(first.x - last.x, first.y - last.y)
+    if (gap > kotlin.math.max(width, height) * 0.25f) return false
+
+    // Once round, not a scribble or a spiral: an oval's edge is about 1.6 x (width + height).
+    val length = calculateStrokeLength(touchPoints)
+    if (length < (width + height) * 1.2f || length > (width + height) * 2.6f) return false
+
+    val loop = pointsToPath(touchPoints.map { SimplePointF(it.x, it.y) }).apply { close() }
+    return selectStrokesFromPath(page.strokes, loop).isNotEmpty()
+}

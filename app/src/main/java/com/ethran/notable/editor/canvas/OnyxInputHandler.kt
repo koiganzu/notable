@@ -1,5 +1,7 @@
 package com.ethran.notable.editor.canvas
 
+import com.ethran.notable.data.model.SimplePointF
+import com.ethran.notable.editor.utils.isCircleAroundStrokes
 import com.ethran.notable.data.datastore.BUTTON_SIZE
 import android.graphics.Color
 import android.graphics.Rect
@@ -352,6 +354,7 @@ class OnyxInputHandler(
             Mode.Draw -> {
                 coroutineScope.launch(Dispatchers.Main.immediate) {
                     var dropped = false
+                    var circled = false
                     CanvasEventBus.drawingInProgress.withLock {
                         val lock = System.currentTimeMillis()
                         log.d("lock obtained in ${lock - startTime} ms")
@@ -364,6 +367,17 @@ class OnyxInputHandler(
                         val scaledPoints =
                             copyInput(plist.points, viewport.scroll, viewport.zoom)
                         val firstPointTime = plist.points.first().timestamp
+                        if (isCircleAroundStrokes(page, scaledPoints, toolbarState.pen)) {
+                            // A loop drawn round handwriting lassoes it instead of leaving ink.
+                            handleSelect(
+                                scope = coroutineScope,
+                                page = drawCanvas.page,
+                                viewModel = viewModel,
+                                points = scaledPoints.map { SimplePointF(it.x, it.y) }
+                            )
+                            circled = true
+                            return@withLock
+                        }
                         val erasedByScribbleDirtyRect = handleScribbleToErase(
                             page,
                             scaledPoints,
@@ -411,6 +425,10 @@ class OnyxInputHandler(
                             drawCanvas.refreshManager.commitErase(dirty, areaErase = true)
                         }
 
+                    }
+                    if (circled) {
+                        // Clear the firmware's ink of the loop; the selection box takes over.
+                        drawCanvas.refreshManager.refreshUi(trackArea(plist))
                     }
                     if (dropped) {
                         // Made on a page no longer shown; only the firmware's ink is left to clear.

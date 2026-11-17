@@ -73,6 +73,7 @@ fun EditorView(
     goToPages: (bookId: String) -> Unit,
     goToBugReport: () -> Unit,
     goToDaybook: () -> Unit = {},
+    goToEditor: (pageId: String, bookId: String?) -> Unit = { _, _ -> },
 
     viewModel: EditorViewModel = hiltViewModel()
 ) {
@@ -159,6 +160,10 @@ fun EditorView(
 
                     EditorUiEvent.NavigateToDaybook -> {
                         goToDaybook()
+                    }
+
+                    is EditorUiEvent.OpenNotebook -> {
+                        goToEditor(event.pageId, event.bookId)
                     }
                 }
             }

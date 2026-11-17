@@ -166,6 +166,9 @@ data class HeadingItem(
     val preview: ImageBitmap?,
     /** One of the Heading.KIND_ values. */
     val kind: String = Heading.KIND_HEADING,
+    /** For a link: the notebook it opens and that notebook's name. */
+    val target: String? = null,
+    val targetTitle: String? = null,
 )
 
 /** One bookmarked page in the Contents panel. */
@@ -177,6 +180,7 @@ data class BookmarkItem(
 data class ContentsUiState(
     val headings: List<HeadingItem> = emptyList(),
     val keywords: List<HeadingItem> = emptyList(),
+    val links: List<HeadingItem> = emptyList(),
     val bookmarks: List<BookmarkItem> = emptyList(),
     val isCurrentPageBookmarked: Boolean = false,
 )
@@ -249,6 +253,7 @@ sealed class EditorUiEvent {
     data class NavigateToPages(val bookId: String) : EditorUiEvent()
     object NavigateToBugReport : EditorUiEvent()
     object NavigateToDaybook : EditorUiEvent()
+    data class OpenNotebook(val pageId: String, val bookId: String) : EditorUiEvent()
 }
 
 // --------------------------------------------------------
@@ -365,6 +370,7 @@ class EditorViewModel @Inject constructor(
         val order = pageIds.withIndex().associate { (index, id) -> id to index }
         fun pageIndex(id: String) = order[id] ?: Int.MAX_VALUE
         fun pageNumber(id: String) = order[id]?.plus(1) ?: 0
+        val titles = HashMap<String, String>()
         val items = headings
             .sortedWith(compareBy({ pageIndex(it.pageId) }, { it.top }))
             .map { heading ->
@@ -378,12 +384,19 @@ class EditorViewModel @Inject constructor(
                             ?.asImageBitmap()
                     }.getOrNull(),
                     kind = heading.kind,
+                    target = heading.target,
+                    targetTitle = heading.target?.let { titles.getOrPut(it) {
+                        appRepository.bookRepository.getById(it)?.title ?: "(deleted notebook)"
+                    } },
                 )
             }
         return ContentsUiState(
             // Handwriting tied to a date is listed with the headings: it is a place in the
             // notebook worth jumping to, like they are.
-            headings = items.filter { it.kind != Heading.KIND_KEYWORD },
+            headings = items.filter {
+                it.kind != Heading.KIND_KEYWORD && it.kind != Heading.KIND_LINK
+            },
+            links = items.filter { it.kind == Heading.KIND_LINK },
             keywords = items.filter { it.kind == Heading.KIND_KEYWORD },
             bookmarks = bookmarks
                 .sortedBy { pageIndex(it.pageId) }
@@ -396,7 +409,32 @@ class EditorViewModel @Inject constructor(
      * Marks the current lasso selection as a heading, keyword or event (see [Heading.kind]),
      * so it shows up in the Contents panel and, for an event on [day], on the Today screen.
      */
-    fun addHeadingFromSelection(kind: String = Heading.KIND_HEADING, day: String? = null) {
+    /** Notebooks a link can point to: id and name, the open one left out, by name. */
+    suspend fun linkTargets(): List<Pair<String, String>> = withContext(Dispatchers.IO) {
+        appRepository.bookRepository.getAll()
+            .filter { it.id != bookId }
+            .map { it.id to it.title }
+            .sortedBy { it.second.lowercase() }
+    }
+
+    /** Follows a link: opens the notebook it points to, at the page last open there. */
+    fun openLink(targetNotebookId: String) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val book = appRepository.bookRepository.getById(targetNotebookId)
+            val pageId = book?.openPageId ?: book?.pageIds?.firstOrNull()
+            if (book == null || pageId == null) {
+                showHint("That notebook is gone")
+                return@launch
+            }
+            sendUiEvent(EditorUiEvent.OpenNotebook(pageId, book.id))
+        }
+    }
+
+    fun addHeadingFromSelection(
+        kind: String = Heading.KIND_HEADING,
+        day: String? = null,
+        target: String? = null,
+    ) {
         val rect = selectionState.selectionRect
         val bitmap = selectionState.selectedBitmap
         val pageId = currentPageId
@@ -432,12 +470,14 @@ class EditorViewModel @Inject constructor(
                         preview = png,
                         kind = kind,
                         day = day,
+                        target = target,
                     )
                 )
                 showHint(
                     when (kind) {
                         Heading.KIND_KEYWORD -> "Added to Keywords"
                         Heading.KIND_EVENT -> "Linked to $day"
+                        Heading.KIND_LINK -> "Link saved. Find it under Links in Contents"
                         else -> "Added to Contents"
                     }
                 )

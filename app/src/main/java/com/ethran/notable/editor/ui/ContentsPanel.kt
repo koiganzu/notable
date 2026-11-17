@@ -42,7 +42,7 @@ import com.ethran.notable.editor.HeadingItem
 import com.ethran.notable.editor.ToolbarAction
 import com.ethran.notable.ui.noRippleClickable
 
-private enum class ContentsTab { Headings, Keywords, Bookmarks }
+private enum class ContentsTab { Headings, Keywords, Links, Bookmarks }
 
 /**
  * Side panel listing the open notebook's headings and bookmarked pages. Tapping an entry
@@ -72,6 +72,10 @@ fun ContentsPanel(
             onClose = close,
             onToggleBookmark = { viewModel.onToolbarAction(ToolbarAction.ToggleBookmark) },
             onDeleteHeading = viewModel::deleteHeading,
+            onOpenLink = { target ->
+                close()
+                viewModel.openLink(target)
+            },
             onJump = onJump,
             modifier = Modifier.align(Alignment.CenterStart),
         )
@@ -117,6 +121,7 @@ private fun ContentsPanelBody(
     onClose: () -> Unit,
     onToggleBookmark: () -> Unit,
     onDeleteHeading: (String) -> Unit,
+    onOpenLink: (String) -> Unit,
     onJump: (pageId: String, top: Int?) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -125,7 +130,7 @@ private fun ContentsPanelBody(
     Column(
         modifier
             .fillMaxHeight()
-            .width(440.dp)
+            .width(520.dp)
             .background(Color.White)
             .border(2.dp, Color.Black, RectangleShape)
             // Swallow taps on the panel itself so they don't close it.
@@ -167,6 +172,11 @@ private fun ContentsPanelBody(
                 modifier = Modifier.weight(1f),
             ) { tab = ContentsTab.Keywords }
             TabLabel(
+                text = "Links (${contents.links.size})",
+                selected = tab == ContentsTab.Links,
+                modifier = Modifier.weight(1f),
+            ) { tab = ContentsTab.Links }
+            TabLabel(
                 text = "Bookmarks (${contents.bookmarks.size})",
                 selected = tab == ContentsTab.Bookmarks,
                 modifier = Modifier.weight(1f),
@@ -205,6 +215,30 @@ private fun ContentsPanelBody(
                             isCurrentPage = keyword.pageId == currentPageId,
                             onOpen = { onJump(keyword.pageId, keyword.top) },
                             onDelete = { onDeleteHeading(keyword.id) },
+                        )
+                    }
+                }
+
+                ContentsTab.Links -> {
+                    if (contents.links.isEmpty()) {
+                        EmptyNote(
+                            "No links yet. Lasso some handwriting, tap the chain button, " +
+                                    "then pick the notebook it should open."
+                        )
+                    }
+                    contents.links.forEach { link ->
+                        Text(
+                            "Opens: ${link.targetTitle ?: ""}",
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.Black,
+                            modifier = Modifier.padding(top = 8.dp)
+                        )
+                        HeadingRow(
+                            heading = link,
+                            isCurrentPage = link.pageId == currentPageId,
+                            onOpen = { link.target?.let(onOpenLink) },
+                            onDelete = { onDeleteHeading(link.id) },
                         )
                     }
                 }

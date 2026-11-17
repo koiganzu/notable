@@ -54,6 +54,13 @@ fun GeneralSettings(
             })
 
         SettingToggleRow(
+            label = "Circle handwriting to lasso it",
+            value = settings.circleToSelect,
+            onToggle = { isChecked ->
+                onSettingsChange(settings.copy(circleToSelect = isChecked))
+            })
+
+        SettingToggleRow(
             label = stringResource(R.string.enable_smooth_scrolling),
             value = settings.smoothScroll,
             onToggle = { isChecked ->

@@ -1,5 +1,26 @@
 package com.ethran.notable.editor.ui
 
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.material.Text
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.Column
+import androidx.compose.ui.window.Dialog
+import androidx.compose.runtime.LaunchedEffect
+import compose.icons.feathericons.Link
+import androidx.compose.foundation.border
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.layout.onSizeChanged
+import com.ethran.notable.data.datastore.AppSettings
+import com.ethran.notable.data.datastore.GlobalAppSettings
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.unit.IntSize
 import android.content.Context
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
@@ -73,6 +94,26 @@ fun SelectedBitmap(
         )
     }
 
+    // The list of notebooks for linking the selection to one is showing.
+    var isPickingLink by remember { mutableStateOf(false) }
+    if (isPickingLink) {
+        LinkPickerDialog(
+            loadTargets = { controlTower.linkTargets() },
+            onPick = { notebookId ->
+                isPickingLink = false
+                controlTower.linkSelectionTo(notebookId)
+            },
+            onDismiss = { isPickingLink = false },
+        )
+    }
+
+    // Measured so the button row can be kept wholly on screen.
+    var menuSize by remember { mutableStateOf(IntSize.Zero) }
+    val screen = LocalView.current
+    val density = LocalDensity.current
+    val sidePanel = GlobalAppSettings.current.toolbarPosition == AppSettings.Position.Left
+    val topBar = GlobalAppSettings.current.toolbarPosition == AppSettings.Position.Top
+
     var selectionDisplaceOffset =
         controlTower.page.applyZoom(selectionState.selectionDisplaceOffset ?: return)
     val selectionRect =
@@ -130,15 +171,29 @@ fun SelectedBitmap(
         selectionStartOffset.let { startOffset ->
             selectionDisplaceOffset.let { displaceOffset ->
                 // TODO: I think the toolbar is still not in the center.
-                val xPos = selectionRect.let { rect ->
-                    (rect.right - rect.left) / 2 - buttonCount * (BUTTON_SIZE + 5 * toolbarPadding)
-                }
-                val offset = startOffset + displaceOffset + IntOffset(x = xPos, y = -100)
+                val bar = with(density) { (BUTTON_SIZE + 10).dp.roundToPx() }
+                val gap = with(density) { 16.dp.roundToPx() }
+                val anchor = startOffset + displaceOffset
+                val boxWidth = selectionRect.right - selectionRect.left
+                val boxHeight = selectionRect.bottom - selectionRect.top
+                // Centred over the selection, then pulled back inside the screen.
+                val minX = if (sidePanel) bar else 0
+                val maxX = (screen.width - menuSize.width).coerceAtLeast(minX)
+                val x = (anchor.x + boxWidth / 2 - menuSize.width / 2).coerceIn(minX, maxX)
+                // Above the selection; below it when there is no room above.
+                val minY = if (topBar) bar else 0
+                val above = anchor.y - menuSize.height - gap
+                val below = anchor.y + boxHeight + gap
+                val maxY = (screen.height - menuSize.height).coerceAtLeast(minY)
+                val y = (if (above >= minY) above else below).coerceIn(minY, maxY)
+                val offset = IntOffset(x, y)
                 // Overlay buttons near the selection box
                 Row(
                     modifier = Modifier
                         .offset { offset }
-                        .background(Color.White.copy(alpha = 0.8f))
+                        .onSizeChanged { menuSize = it }
+                        .background(Color.White, RoundedCornerShape(12.dp))
+                        .border(2.dp, Color.Black, RoundedCornerShape(12.dp))
                         .padding(toolbarPadding.dp)
                         .height(BUTTON_SIZE.dp)
                 ) {
@@ -161,6 +216,13 @@ fun SelectedBitmap(
                         isSelected = false,
                         onSelect = { isPickingDate = true },
                         contentDescription = "Link to a date",
+                        modifier = Modifier.height(BUTTON_SIZE.dp)
+                    )
+                    ToolbarButton(
+                        vectorIcon = FeatherIcons.Link,
+                        isSelected = false,
+                        onSelect = { isPickingLink = true },
+                        contentDescription = "Link to another notebook",
                         modifier = Modifier.height(BUTTON_SIZE.dp)
                     )
                     ToolbarButton(
@@ -222,5 +284,61 @@ fun SelectedBitmap(
             }
         }
 
+    }
+}
+
+/** Lists the other notebooks; tapping one calls [onPick] with its id. */
+@Composable
+private fun LinkPickerDialog(
+    loadTargets: suspend () -> List<Pair<String, String>>,
+    onPick: (String) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    var targets by remember { mutableStateOf<List<Pair<String, String>>?>(null) }
+    LaunchedEffect(Unit) { targets = loadTargets() }
+    val panel = RoundedCornerShape(16.dp)
+
+    Dialog(onDismissRequest = onDismiss) {
+        Column(
+            Modifier
+                .width(440.dp)
+                .background(Color.White, panel)
+                .border(2.dp, Color.Black, panel)
+                .padding(18.dp)
+        ) {
+            Text("Link to a notebook", fontSize = 22.sp, fontWeight = FontWeight.Bold)
+            Spacer(Modifier.height(10.dp))
+            val list = targets
+            when {
+                list == null -> Text("Loading…", fontSize = 17.sp)
+                list.isEmpty() -> Text(
+                    "There are no other notebooks yet. Make one in the Library first.",
+                    fontSize = 17.sp
+                )
+
+                else -> Column(
+                    Modifier
+                        .heightIn(max = 520.dp)
+                        .verticalScroll(rememberScrollState())
+                ) {
+                    list.forEach { (id, title) ->
+                        Text(
+                            title,
+                            fontSize = 18.sp,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .noRippleClickable { onPick(id) }
+                                .padding(vertical = 12.dp)
+                        )
+                        Box(
+                            Modifier
+                                .fillMaxWidth()
+                                .height(1.dp)
+                                .background(Color.Gray)
+                        )
+                    }
+                }
+            }
+        }
     }
 }

@@ -41,11 +41,14 @@ class Heading(
     @ColumnInfo(defaultValue = KIND_HEADING) val kind: String = KIND_HEADING,
     /** ISO date, e.g. 2026-11-16, for an event; null otherwise. */
     @ColumnInfo(index = true) val day: String? = null,
+    /** For a link: the id of the notebook it opens; null otherwise. */
+    val target: String? = null,
 ) {
     companion object {
         const val KIND_HEADING = "heading"
         const val KIND_KEYWORD = "keyword"
         const val KIND_EVENT = "event"
+        const val KIND_LINK = "link"
     }
 }
 

@@ -257,6 +257,12 @@ class EditorControlTower(
     /** Adds the current selection to the notebook's Contents as a heading. */
     fun markSelectionAsHeading() = viewModel.addHeadingFromSelection()
 
+    /** Links the current selection to another notebook. */
+    fun linkSelectionTo(notebookId: String) =
+        viewModel.addHeadingFromSelection(kind = Heading.KIND_LINK, target = notebookId)
+
+    suspend fun linkTargets() = viewModel.linkTargets()
+
     /** Adds the current selection to the notebook's keyword index. */
     fun markSelectionAsKeyword() =
         viewModel.addHeadingFromSelection(kind = Heading.KIND_KEYWORD)

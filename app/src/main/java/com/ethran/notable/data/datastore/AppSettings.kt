@@ -41,6 +41,7 @@ data class AppSettings(
     val defaultNativeTemplate: String = "blank",
     val quickNavPages: List<String> = listOf(),
     val scribbleToEraseEnabled: Boolean = false,
+    val circleToSelect: Boolean = true,
     val toolbarPosition: Position = Position.Left,
     val smoothScroll: Boolean = true,
     val continuousZoom: Boolean = false,
