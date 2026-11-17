@@ -96,6 +96,7 @@ fun SelectedBitmap(
 
     // The list of notebooks for linking the selection to one is showing.
     var isPickingLink by remember { mutableStateOf(false) }
+    var isPickingPlannerDay by remember { mutableStateOf(false) }
     if (isPickingLink) {
         LinkPickerDialog(
             loadTargets = { controlTower.linkTargets() },
@@ -103,7 +104,21 @@ fun SelectedBitmap(
                 isPickingLink = false
                 controlTower.linkSelectionTo(notebookId)
             },
+            onPickPlanner = {
+                isPickingLink = false
+                isPickingPlannerDay = true
+            },
             onDismiss = { isPickingLink = false },
+        )
+    }
+    if (isPickingPlannerDay) {
+        DatePickerDialog(
+            title = "Link to the planner page for…",
+            onPick = { day ->
+                isPickingPlannerDay = false
+                controlTower.linkSelectionToDay(day.toString())
+            },
+            onDismiss = { isPickingPlannerDay = false },
         )
     }
 
@@ -292,6 +307,7 @@ fun SelectedBitmap(
 private fun LinkPickerDialog(
     loadTargets: suspend () -> List<Pair<String, String>>,
     onPick: (String) -> Unit,
+    onPickPlanner: () -> Unit,
     onDismiss: () -> Unit,
 ) {
     var targets by remember { mutableStateOf<List<Pair<String, String>>?>(null) }
@@ -306,13 +322,27 @@ private fun LinkPickerDialog(
                 .border(2.dp, Color.Black, panel)
                 .padding(18.dp)
         ) {
-            Text("Link to a notebook", fontSize = 22.sp, fontWeight = FontWeight.Bold)
-            Spacer(Modifier.height(10.dp))
+            Text("Link to…", fontSize = 22.sp, fontWeight = FontWeight.Bold)
+            Spacer(Modifier.height(12.dp))
+            Text(
+                "A planner page (pick the day)",
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.White,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(Color.Black, RoundedCornerShape(12.dp))
+                    .noRippleClickable { onPickPlanner() }
+                    .padding(horizontal = 14.dp, vertical = 12.dp)
+            )
+            Spacer(Modifier.height(14.dp))
+            Text("Or a notebook", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+            Spacer(Modifier.height(4.dp))
             val list = targets
             when {
                 list == null -> Text("Loading…", fontSize = 17.sp)
                 list.isEmpty() -> Text(
-                    "There are no other notebooks yet. Make one in the Library first.",
+                    "No other notebooks yet.",
                     fontSize = 17.sp
                 )
 

@@ -1,5 +1,8 @@
 package com.ethran.notable.ui.views
 
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.foundation.shape.RoundedCornerShape
 import com.ethran.notable.tips.HelpDialog
 import com.ethran.notable.tips.TipPlace
 import com.ethran.notable.tips.TipHint
@@ -190,7 +193,7 @@ fun LibraryContent(
 
         }
 
-        Column(Modifier.padding(10.dp)) {
+        Column(Modifier.padding(horizontal = 22.dp, vertical = 10.dp)) {
             Spacer(Modifier.height(10.dp))
 
             FolderList(
@@ -200,7 +203,7 @@ fun LibraryContent(
                 onCreateNewFolder = onCreateNewFolder
             )
 
-            Spacer(Modifier.height(10.dp))
+            Spacer(Modifier.height(22.dp))
             ShowPagesRow(
                 appRepository = appRepository,
                 pages = uiState.singlePages,
@@ -211,7 +214,7 @@ fun LibraryContent(
                 onPreviewMissing = onPreviewMissing
             )
 
-            Spacer(Modifier.height(10.dp))
+            Spacer(Modifier.height(22.dp))
 
             BooxNotesRow()
 
@@ -250,8 +253,8 @@ fun FolderList(
             // Add new folder row
             Row(
                 Modifier
-                    .border(0.5.dp, Color.Black)
-                    .padding(horizontal = 10.dp, vertical = 5.dp)
+                    .border(2.dp, Color.Black, RoundedCornerShape(50))
+                    .padding(horizontal = 16.dp, vertical = 8.dp)
                     .noRippleClickable(onClick = onCreateNewFolder)
             ) {
                 Icon(
@@ -278,15 +281,15 @@ fun FolderList(
                         .combinedClickable(
                             onClick = { onNavigateToFolder(folder.id) },
                             onLongClick = { isFolderSettingsOpen = true })
-                        .border(0.5.dp, Color.Black)
-                        .padding(10.dp, 5.dp)
+                        .background(Color.Black, RoundedCornerShape(50))
+                        .padding(16.dp, 8.dp)
                 ) {
                     Icon(
                         imageVector = FeatherIcons.Folder, contentDescription = "Folder",
-                        Modifier.height(20.dp)
+                        Modifier.height(20.dp), tint = Color.White
                     )
                     Spacer(Modifier.width(10.dp))
-                    Text(text = folder.title)
+                    Text(text = folder.title, color = Color.White, fontWeight = FontWeight.Bold)
                 }
             }
         }
@@ -305,12 +308,11 @@ fun NotebookGrid(
     onImportXopp: (Uri) -> Unit,
     onPreviewMissing: (String) -> Unit
 ) {
-    Text(text = stringResource(R.string.home_notebooks))
-    Spacer(Modifier.height(10.dp))
+    com.ethran.notable.daybook.LibrarySection(stringResource(R.string.home_notebooks))
     LazyVerticalGrid(
-        columns = GridCells.Adaptive(100.dp),
-        verticalArrangement = Arrangement.spacedBy(10.dp),
-        horizontalArrangement = Arrangement.spacedBy(10.dp),
+        columns = GridCells.Adaptive(140.dp),
+        verticalArrangement = Arrangement.spacedBy(18.dp),
+        horizontalArrangement = Arrangement.spacedBy(18.dp),
         modifier = Modifier.autoEInkAnimationOnScroll()
     ) {
         item {
@@ -392,7 +394,8 @@ fun NotebookImportPanel(
         modifier = modifier
             .width(100.dp)
             .aspectRatio(3f / 4f)
-            .border(1.dp, Color.Gray, RectangleShape),
+            .clip(RoundedCornerShape(14.dp))
+            .border(2.dp, Color.Black, RoundedCornerShape(14.dp)),
     ) {
         Column(
             modifier = Modifier.fillMaxSize()
@@ -404,7 +407,7 @@ fun NotebookImportPanel(
                     .weight(1f) // Takes half the height
                     .fillMaxWidth()
                     .background(Color.LightGray.copy(alpha = 0.3f))
-                    .border(2.dp, Color.Black, RectangleShape)
+                    .border(1.dp, Color.Black, RectangleShape)
                     .noRippleClickable(onClick = onCreateNewNotebook)
             ) {
                 Icon(
@@ -443,7 +446,7 @@ fun NotebookImportPanel(
                     .weight(1f)
                     .fillMaxWidth()
                     .background(Color.LightGray.copy(alpha = 0.3f))
-                    .border(2.dp, Color.Black, RectangleShape)
+                    .border(1.dp, Color.Black, RectangleShape)
                     .noRippleClickable {
                         launcher.launch(
                             arrayOf(

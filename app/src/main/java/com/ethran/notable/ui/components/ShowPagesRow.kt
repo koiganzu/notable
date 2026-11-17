@@ -49,8 +49,7 @@ fun ShowPagesRow(
 ) {
 
     if (title != null) {
-        Text(text = title)
-        Spacer(Modifier.height(10.dp))
+        com.ethran.notable.daybook.LibrarySection(title)
     }
 
     LazyRow(

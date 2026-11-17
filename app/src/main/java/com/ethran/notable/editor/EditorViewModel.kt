@@ -389,7 +389,9 @@ class EditorViewModel @Inject constructor(
                     kind = heading.kind,
                     target = heading.target,
                     targetTitle = heading.target?.let { titles.getOrPut(it) {
-                        appRepository.bookRepository.getById(it)?.title ?: "(deleted notebook)"
+                        if (it.startsWith(DAY_LINK)) "Planner, " + plannerDayLabel(it)
+                        else appRepository.bookRepository.getById(it)?.title
+                            ?: "(deleted notebook)"
                     } },
                 )
             }
@@ -412,6 +414,11 @@ class EditorViewModel @Inject constructor(
      * Marks the current lasso selection as a heading, keyword or event (see [Heading.kind]),
      * so it shows up in the Contents panel and, for an event on [day], on the Today screen.
      */
+    private fun plannerDayLabel(target: String): String = runCatching {
+        java.time.LocalDate.parse(target.removePrefix(DAY_LINK))
+            .format(java.time.format.DateTimeFormatter.ofPattern("EEE d MMM yyyy"))
+    }.getOrDefault(target.removePrefix(DAY_LINK))
+
     /** Notebooks a link can point to: id and name, the open one left out, by name. */
     suspend fun linkTargets(): List<Pair<String, String>> = withContext(Dispatchers.IO) {
         appRepository.bookRepository.getAll()
@@ -423,6 +430,22 @@ class EditorViewModel @Inject constructor(
     /** Follows a link: opens the notebook it points to, at the page last open there. */
     fun openLink(targetNotebookId: String) {
         viewModelScope.launch(Dispatchers.IO) {
+            if (targetNotebookId.startsWith(DAY_LINK)) {
+                // A link to a day opens that day's planner page, making it if need be.
+                val opened = runCatching {
+                    val day = java.time.LocalDate.parse(targetNotebookId.removePrefix(DAY_LINK))
+                    val events = runCatching {
+                        com.ethran.notable.daybook.CalendarEvents.forDay(context, day)
+                    }.getOrDefault(emptyList())
+                    dagger.hilt.android.EntryPointAccessors
+                        .fromApplication(context, DaybookEntryPoint::class.java)
+                        .daybookRepository()
+                        .openDayPage(day, events)
+                }.getOrNull()
+                if (opened?.bookId == null) showHint("Couldn't open that planner page")
+                else sendUiEvent(EditorUiEvent.OpenNotebook(opened.pageId, opened.bookId))
+                return@launch
+            }
             val book = appRepository.bookRepository.getById(targetNotebookId)
             val pageId = book?.openPageId ?: book?.pageIds?.firstOrNull()
             if (book == null || pageId == null) {
@@ -1230,6 +1253,8 @@ class EditorViewModel @Inject constructor(
     }
 
     companion object {
+        /** Prefix of a link target that is a planner day rather than a notebook id. */
+        const val DAY_LINK = "day:"
         // Canonical values live in the default pen presets (ToolbarPen.DEFAULT_PENS) —
         // one source of truth. These are fallbacks only; persisted user presets win.
         val DEFAULT_PEN_SETTINGS = ToolbarPen.defaultPenSettings

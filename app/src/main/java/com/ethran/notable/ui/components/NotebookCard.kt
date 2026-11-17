@@ -1,5 +1,9 @@
 package com.ethran.notable.ui.components
 
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -47,13 +51,13 @@ fun NotebookCard(
     onPreviewMissing: (String) -> Unit = {},
 ) {
 
-    Box(
+    val card = RoundedCornerShape(14.dp)
+    Column(
         modifier = modifier
             .fillMaxWidth()
-            .aspectRatio(3f / 4f)
-            .border(1.dp, Color.Black, RectangleShape)
+            .clip(card)
+            .border(2.dp, Color.Black, card)
             .background(Color.White)
-            .clip(RoundedCornerShape(2))
     ) {
         Box {
             val pageId = pageIds[0]
@@ -62,46 +66,54 @@ fun NotebookCard(
                 modifier = Modifier
                     .fillMaxWidth()
                     .aspectRatio(3f / 4f)
-                    .border(1.dp, Color.Black, RectangleShape)
                     .combinedClickable(
                         onClick = { onOpen(bookId, openPageId ?: pageIds[0]) },
                         onLongClick = { onOpenSettings(bookId) }),
                 pageId = pageId,
                 onPreviewMissing = onPreviewMissing
             )
-        }
-        Text(
-            text = pageIds.size.toString(),
-            modifier = Modifier
-                .background(Color.Black)
-                .padding(5.dp),
-            color = Color.White
-        )
-        syncBadge?.iconOrNull()?.let { icon ->
-            Icon(
-                imageVector = icon,
-                contentDescription = "Sync status: ${syncBadge.name}",
-                tint = Color.Black,
+            // Page count, as a small pill in the corner.
+            Text(
+                text = pageIds.size.toString(),
+                fontSize = 13.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.White,
                 modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .padding(4.dp)
-                    .background(Color.White, CircleShape)
-                    .padding(2.dp)
-                    .size(16.dp)
+                    .padding(8.dp)
+                    .background(Color.Black, RoundedCornerShape(50))
+                    .padding(horizontal = 9.dp, vertical = 2.dp)
             )
+            syncBadge?.iconOrNull()?.let { icon ->
+                Icon(
+                    imageVector = icon,
+                    contentDescription = "Sync status: ${syncBadge.name}",
+                    tint = Color.Black,
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(6.dp)
+                        .background(Color.White, CircleShape)
+                        .padding(2.dp)
+                        .size(16.dp)
+                )
+            }
         }
+        Box(
+            Modifier
+                .fillMaxWidth()
+                .height(2.dp)
+                .background(Color.Black)
+        )
         Text(
             text = title,
             textAlign = TextAlign.Center,
-            maxLines = 2,
+            fontSize = 15.sp,
+            fontWeight = FontWeight.Bold,
+            maxLines = 1,
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier
-                .align(Alignment.BottomEnd)
                 .fillMaxWidth()
-                .padding(bottom = 8.dp) // Add some padding above the row
-                .background(Color.White)
+                .padding(horizontal = 8.dp, vertical = 8.dp)
         )
-
     }
 }
 

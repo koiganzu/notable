@@ -1,5 +1,6 @@
 package com.ethran.notable.daybook
 
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
@@ -41,10 +42,10 @@ fun InkButton(
         maxLines = 1,
         overflow = TextOverflow.Ellipsis,
         modifier = modifier
-            .background(if (filled) Color.Black else Color.White)
-            .border(2.dp, Color.Black, RectangleShape)
+            .background(if (filled) Color.Black else Color.White, RoundedCornerShape(50))
+            .border(2.dp, Color.Black, RoundedCornerShape(50))
             .noRippleClickable { onClick() }
-            .padding(horizontal = 14.dp, vertical = 10.dp)
+            .padding(horizontal = 18.dp, vertical = 9.dp)
     )
 }
 
@@ -128,4 +129,18 @@ fun DigestCard(
         Spacer(Modifier.height(8.dp))
         Row(verticalAlignment = Alignment.CenterVertically) { actions() }
     }
+}
+
+
+/** Heading over a block of the Library: bold, with a short rule under it. */
+@Composable
+fun LibrarySection(text: String) {
+    Text(text, fontSize = 21.sp, fontWeight = FontWeight.Bold, color = Color.Black)
+    Box(
+        Modifier
+            .padding(top = 4.dp, bottom = 12.dp)
+            .width(44.dp)
+            .height(3.dp)
+            .background(Color.Black)
+    )
 }

@@ -165,8 +165,7 @@ fun BooxNotesRow() {
     val list = notes ?: return
     val card = RoundedCornerShape(12.dp)
 
-    Text("BOOX notebooks")
-    Spacer(Modifier.height(10.dp))
+    LibrarySection("BOOX notebooks")
     LazyRow {
         item {
             Text(
@@ -209,5 +208,5 @@ fun BooxNotesRow() {
             }
         }
     }
-    Spacer(Modifier.height(10.dp))
+    Spacer(Modifier.height(22.dp))
 }

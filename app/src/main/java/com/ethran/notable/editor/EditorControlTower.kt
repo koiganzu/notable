@@ -261,6 +261,11 @@ class EditorControlTower(
     fun linkSelectionTo(notebookId: String) =
         viewModel.addHeadingFromSelection(kind = Heading.KIND_LINK, target = notebookId)
 
+    /** Links the current selection to [day]'s planner page; it also shows on Today for that day. */
+    fun linkSelectionToDay(day: String) = viewModel.addHeadingFromSelection(
+        kind = Heading.KIND_LINK, day = day, target = EditorViewModel.DAY_LINK + day
+    )
+
     suspend fun linkTargets() = viewModel.linkTargets()
 
     /** Adds the current selection to the notebook's keyword index. */

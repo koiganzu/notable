@@ -73,7 +73,7 @@ object Tips {
 
         Tip("sel_heading", TipPlace.Selection, "# turns this into a heading, so you can jump to it from Contents. The key makes it a keyword."),
         Tip("sel_date", TipPlace.Selection, "The calendar button ties this to a date. It then shows up on Today for that day."),
-        Tip("sel_link", TipPlace.Selection, "The chain button links this to another notebook. Follow it later from Contents, under Links."),
+        Tip("sel_link", TipPlace.Selection, "The chain button links this to another notebook or to a day's planner page. Follow it later from Contents, under Links."),
         Tip("sel_digest", TipPlace.Selection, "Over a PDF, the book button copies the printed text underneath into Digest."),
         Tip("sel_move", TipPlace.Selection, "Drag the selection to move it. Double-tap it to make a copy."),
 
