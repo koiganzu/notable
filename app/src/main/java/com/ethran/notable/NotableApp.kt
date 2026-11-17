@@ -1,5 +1,6 @@
 package com.ethran.notable
 
+import com.ethran.notable.ui.components.Breadcrumbs
 import android.app.Application
 import android.util.Log
 import com.onyx.android.sdk.base.utils.ResManager
@@ -22,6 +23,7 @@ class NotableApp : Application() {
         super.onCreate()
         // Install first & synchronously so a crash during the rest of init is still caught.
         installCrashHandler()
+        Breadcrumbs.init(this)
         // Small prefs I/O, kept on-thread: a fast startup crash must still update last_start or the
         // next launch's crash-loop check misreads the interval.
         logCrashLoopSignalOnStart()

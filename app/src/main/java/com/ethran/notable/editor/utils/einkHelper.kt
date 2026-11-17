@@ -1,5 +1,6 @@
 package com.ethran.notable.editor.utils
 
+import com.ethran.notable.ui.components.Breadcrumbs
 import android.graphics.Rect
 import android.os.Build
 import android.view.View
@@ -167,8 +168,10 @@ fun setupSurface(view: View, touchHelper: TouchHelper?, toolbarHeight: Int) {
             Rect(0, 0, toolbarHeight, viewHeight) to Rect(toolbarHeight, 0, viewWidth, viewHeight)
     }
 
+    Breadcrumbs.add("pen surface: view ${viewWidth}x$viewHeight limit=$limitRect exclude=$excludeRect")
     touchHelper.setLimitRect(mutableListOf(limitRect)).setExcludeRect(listOf(excludeRect))
         .openRawDrawing()
+    Breadcrumbs.add("pen surface: opened")
     log.i("Setup editable surface completed")
 
 }

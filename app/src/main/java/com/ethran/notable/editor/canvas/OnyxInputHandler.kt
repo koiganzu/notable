@@ -1,5 +1,6 @@
 package com.ethran.notable.editor.canvas
 
+import com.ethran.notable.ui.components.Breadcrumbs
 import com.ethran.notable.data.model.SimplePointF
 import com.ethran.notable.editor.utils.isCircleAroundStrokes
 import com.ethran.notable.data.datastore.BUTTON_SIZE
@@ -140,6 +141,10 @@ class OnyxInputHandler(
     }
 
     fun updatePenAndStroke() {
+        Breadcrumbs.add(
+            "pen style: mode=${toolbarState.mode} pen=${toolbarState.pen} " +
+                    "size=${toolbarState.activePenSetting.strokeSize} helper=${touchHelper != null}"
+        )
         if(touchHelper == null) return
         // it takes around 11 ms to run on Note 4c.
         log.i("Update pen and stroke")

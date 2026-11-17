@@ -1,5 +1,7 @@
 package com.ethran.notable.ui.components
 
+import androidx.compose.foundation.layout.width
+import androidx.compose.ui.text.font.FontWeight
 import android.content.Context
 import android.content.Intent
 import android.widget.Toast
@@ -55,7 +57,31 @@ fun CrashLogsSettings() {
         value = withContext(Dispatchers.IO) { loadCrashLogs(context) }
     }
 
+    // For crashes that leave no Java stack: Android's own record of how the app last ended, and
+    // the trail of what it was doing just before.
+    val report by produceState(initialValue = "", reload) {
+        value = withContext(Dispatchers.IO) {
+            "==== How the app last ended ====\n" + Breadcrumbs.exitReasons(context) +
+                    "\n\n==== What it was doing ====\n" + Breadcrumbs.read(context)
+        }
+    }
+
     Column(modifier = Modifier.padding(vertical = 8.dp)) {
+        Text(text = "Problem report", fontWeight = FontWeight.Bold)
+        Text(
+            text = "If the app closed on its own, tap Copy report and paste it to whoever is " +
+                    "helping you.",
+            fontSize = 14.sp
+        )
+        Row {
+            Button(onClick = {
+                clipboard.setText(AnnotatedString(report))
+                Toast.makeText(context, "Copied report", Toast.LENGTH_SHORT).show()
+            }) { Text("Copy report") }
+            Spacer(Modifier.width(10.dp))
+            Button(onClick = { shareText(context, report) }) { Text("Share report") }
+        }
+        Spacer(Modifier.height(12.dp))
         Text(
             text = "Crash logs (${logs.size})",
             style = MaterialTheme.typography.subtitle1

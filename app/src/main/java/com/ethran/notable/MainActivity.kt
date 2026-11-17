@@ -327,6 +327,7 @@ class MainActivity : ComponentActivity() {
     }
 
     override fun onWindowFocusChanged(hasFocus: Boolean) {
+        com.ethran.notable.ui.components.Breadcrumbs.add("window: focus=$hasFocus")
         Log.d(TAG, "OnWindowFocusChanged: $hasFocus")
         super.onWindowFocusChanged(hasFocus)
         if (hasFocus) {
@@ -376,6 +377,7 @@ class MainActivity : ComponentActivity() {
     // when the screen orientation is changed, set new screen width restart is not necessary,
     // as we need first to update page dimensions which is done in EditorView()
     override fun onConfigurationChanged(newConfig: Configuration) {
+        com.ethran.notable.ui.components.Breadcrumbs.add("window: config ${newConfig.screenWidthDp}x${newConfig.screenHeightDp}dp orientation=${newConfig.orientation} split=$isInMultiWindowMode")
         super.onConfigurationChanged(newConfig)
         if (newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) {
             Log.i(TAG, "Switched to Landscape")

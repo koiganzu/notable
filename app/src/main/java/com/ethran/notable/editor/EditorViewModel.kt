@@ -1,5 +1,6 @@
 package com.ethran.notable.editor
 
+import com.ethran.notable.ui.components.Breadcrumbs
 import com.ethran.notable.editor.ui.toolbar.model.ToolbarLayout
 import android.content.Context
 import android.graphics.Bitmap
@@ -671,6 +672,7 @@ class EditorViewModel @Inject constructor(
 
     fun onToolbarAction(action: ToolbarAction) {
         log.v("onToolbarAction: $action")
+        Breadcrumbs.add("toolbar: " + action.toString().take(90))
         when (action) {
             is ToolbarAction.ToggleToolbar -> {
                 // A closed toolbar shows no popups, so none may keep the pen off.
