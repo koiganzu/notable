@@ -1,5 +1,6 @@
 package com.ethran.notable.editor
 
+import com.ethran.notable.editor.ui.toolbar.model.ToolbarLayout
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
@@ -191,6 +192,8 @@ sealed class ToolbarAction {
     /** A pen button was tapped: selects the pen, or toggles its stroke menu if already selected. */
     data class PenButtonTapped(val presetId: String) : ToolbarAction()
     object ClosePenMenu : ToolbarAction()
+    data class AddPen(val template: ToolbarPen) : ToolbarAction()
+    data class RemovePen(val presetId: String) : ToolbarAction()
     data class ChangePenSetting(val presetId: String, val setting: PenSetting) : ToolbarAction()
     data class ChangeEraser(val eraser: Eraser) : ToolbarAction()
     object ToggleMenu : ToolbarAction()
@@ -625,6 +628,8 @@ class EditorViewModel @Inject constructor(
             ToolbarAction.ClosePenMenu -> _toolbarState.update { it.copy(penMenuPresetId = null) }
             is ToolbarAction.ChangePenSetting ->
                 handlePenSettingChange(action.presetId, action.setting)
+            is ToolbarAction.AddPen -> handleAddPen(action.template)
+            is ToolbarAction.RemovePen -> handleRemovePen(action.presetId)
             is ToolbarAction.ChangeEraser -> handleEraserChange(action.eraser)
             is ToolbarAction.ToggleMenu -> {
                 _toolbarState.update { it.copy(isMenuOpen = !it.isMenuOpen) }
@@ -713,6 +718,54 @@ class EditorViewModel @Inject constructor(
                 CanvasEventBus.refreshUi.emit(Unit)
             }
         }
+    }
+
+    /** Adds a pen to the toolbar, after the pens already there, and picks it up. */
+    private fun handleAddPen(template: ToolbarPen) {
+        val settings = GlobalAppSettings.current
+        val preset = template.copy(id = ToolbarPen.newId())
+        val pens = settings.toolbarPens + preset
+        val layout = settings.toolbarLayout?.validated(settings.toolbarPens) ?: ToolbarLayout.DEFAULT
+        val lastPen = layout.scrollable.indexOfLast { it.startsWith(ToolbarPen.LAYOUT_PREFIX) }
+        val scrollable = layout.scrollable.toMutableList()
+            .apply { add(lastPen + 1, preset.layoutEntry) }
+        val updated = settings.copy(
+            toolbarPens = pens,
+            toolbarLayout = layout.copy(scrollable = scrollable).validated(pens),
+        )
+        GlobalAppSettings.update(updated)
+        _toolbarState.update {
+            it.copy(
+                penSettings = it.penSettings + (preset.id to preset.setting()),
+                pen = preset.pen, penPresetId = preset.id, mode = Mode.Draw,
+                penMenuPresetId = null,
+            )
+        }
+        saveToolbarState()
+        viewModelScope.launch(Dispatchers.IO) { appRepository.kvProxy.setAppSettings(updated) }
+        viewModelScope.launch { CanvasEventBus.refreshUi.emit(Unit) }
+    }
+
+    /** Takes a pen off the toolbar. The last pen stays: there must be something to write with. */
+    private fun handleRemovePen(presetId: String) {
+        val settings = GlobalAppSettings.current
+        val pens = settings.toolbarPens.filter { it.id != presetId }
+        if (pens.isEmpty() || pens.size == settings.toolbarPens.size) return
+        val layout = settings.toolbarLayout?.validated(settings.toolbarPens) ?: ToolbarLayout.DEFAULT
+        val updated = settings.copy(toolbarPens = pens, toolbarLayout = layout.validated(pens))
+        GlobalAppSettings.update(updated)
+        val next = pens.first()
+        _toolbarState.update {
+            val wasInHand = it.penPresetId == presetId
+            it.copy(
+                penMenuPresetId = null,
+                pen = if (wasInHand) next.pen else it.pen,
+                penPresetId = if (wasInHand) next.id else it.penPresetId,
+            )
+        }
+        saveToolbarState()
+        viewModelScope.launch(Dispatchers.IO) { appRepository.kvProxy.setAppSettings(updated) }
+        viewModelScope.launch { CanvasEventBus.refreshUi.emit(Unit) }
     }
 
     private fun handleEraserChange(eraser: Eraser) {

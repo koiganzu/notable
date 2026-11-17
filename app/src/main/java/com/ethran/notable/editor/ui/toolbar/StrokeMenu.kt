@@ -55,6 +55,8 @@ fun StrokeMenu(
     onClose: () -> Unit,
     sizeOptions: List<Pair<String, Float>>,
     colorOptions: List<Color>,
+    title: String? = null,
+    onRemove: (() -> Unit)? = null,
 ) {
     val panel = RoundedCornerShape(16.dp)
     val panelWidth = maxOf(320, colorOptions.size * 48 + 28)
@@ -72,6 +74,28 @@ fun StrokeMenu(
                 .border(2.dp, Color.Black, panel)
                 .padding(horizontal = 14.dp, vertical = 12.dp)
         ) {
+            if (title != null) {
+                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        title,
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.weight(1f)
+                    )
+                    if (onRemove != null) {
+                        Text(
+                            "Remove",
+                            fontSize = 15.sp,
+                            modifier = Modifier
+                                .border(2.dp, Color.Black, RoundedCornerShape(50))
+                                .clickable { onRemove() }
+                                .padding(horizontal = 14.dp, vertical = 5.dp)
+                        )
+                    }
+                }
+                Spacer(Modifier.height(12.dp))
+            }
+
             val sizes = sizeOptions.map { it.second }.distinct().sorted()
             if (sizes.size >= 2) {
                 SliderLabel("Thickness", value.strokeSize.roundToInt().toString())

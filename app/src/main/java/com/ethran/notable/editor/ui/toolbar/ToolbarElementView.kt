@@ -1,5 +1,11 @@
 package com.ethran.notable.editor.ui.toolbar
 
+import androidx.compose.foundation.layout.size
+import androidx.compose.ui.res.painterResource
+import androidx.compose.material.Icon
+import androidx.compose.foundation.shape.RoundedCornerShape
+import com.ethran.notable.editor.ui.toolbar.model.ToolbarElements
+import com.ethran.notable.editor.ui.toolbar.model.ToolbarPen
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -178,6 +184,8 @@ private fun PenElementView(
                 onClose = { onAction(ToolbarAction.ClosePenMenu) },
                 sizeOptions = element.submenu.sizeOptions,
                 colorOptions = element.submenu.colorOptions,
+                title = ToolbarPen.displayName(element.pen, penSetting.color),
+                onRemove = { onAction(ToolbarAction.RemovePen(element.presetId)) },
             )
         }
     }
@@ -353,4 +361,62 @@ internal fun toolbarPopupAlignment(): Alignment =
 internal fun toolbarPopupOffset(): IntOffset = with(LocalDensity.current) {
     if (LocalToolbarVertical.current) IntOffset((BUTTON_SIZE + 10).dp.roundToPx(), 0)
     else IntOffset(0, (BUTTON_SIZE + 6).dp.roundToPx())
+}
+
+/** The "+" at the end of the pens: pick a kind of pen and it joins the toolbar. */
+@Composable
+internal fun AddPenButton(onAction: (ToolbarAction) -> Unit) {
+    var open by remember { mutableStateOf(false) }
+    val panel = RoundedCornerShape(16.dp)
+    Box {
+        ToolbarButton(text = "+", contentDescription = "add a pen", onSelect = { open = true })
+        if (open) {
+            ScaledPopup(
+                offset = toolbarPopupOffset(),
+                onDismissRequest = { open = false },
+                properties = PopupProperties(focusable = true),
+                alignment = toolbarPopupAlignment()
+            ) {
+                Column(
+                    Modifier
+                        .width(260.dp)
+                        .background(Color.White, panel)
+                        .border(2.dp, Color.Black, panel)
+                        .padding(vertical = 8.dp)
+                ) {
+                    Text(
+                        "Add a pen",
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                    )
+                    ToolbarPen.ADDABLE.forEach { template ->
+                        Row(
+                            Modifier
+                                .fillMaxWidth()
+                                .noRippleClickable {
+                                    open = false
+                                    onAction(ToolbarAction.AddPen(template))
+                                }
+                                .padding(horizontal = 16.dp, vertical = 9.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            val icon = ToolbarElements.penElement(template).icon
+                            (icon as? IconRef.Drawable)?.let {
+                                Icon(
+                                    painterResource(it.resId), null,
+                                    Modifier.size(28.dp), tint = Color.Black
+                                )
+                            }
+                            Spacer(Modifier.width(14.dp))
+                            Text(
+                                ToolbarPen.displayName(template.pen, template.color),
+                                fontSize = 18.sp
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
 }

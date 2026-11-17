@@ -85,13 +85,43 @@ data class ToolbarPen(
          */
         val DEFAULT_PENS = listOf(
             ToolbarPen("ball", Pen.BALLPEN, AndroidColor.BLACK, 5f),
-            ToolbarPen("red", Pen.BALLPEN, AndroidColor.RED, 5f),
-            ToolbarPen("blue", Pen.BALLPEN, AndroidColor.BLUE, 5f),
-            ToolbarPen("green", Pen.BALLPEN, AndroidColor.GREEN, 5f),
-            ToolbarPen("pencil", Pen.PENCIL, AndroidColor.BLACK, 5f),
-            ToolbarPen("brush", Pen.BRUSH, AndroidColor.BLACK, 5f),
             ToolbarPen("fountain", Pen.FOUNTAIN, AndroidColor.BLACK, 5f),
+            ToolbarPen("pencil", Pen.PENCIL, AndroidColor.BLACK, 5f),
+            ToolbarPen("brush", Pen.BRUSH, AndroidColor.BLACK, 8f),
+            ToolbarPen("felt", Pen.MARKER, AndroidColor.DKGRAY, 25f),
             ToolbarPen("marker", Pen.MARKER, AndroidColor.LTGRAY, 40f),
+        )
+
+        /** A light or see-through marker is a highlighter; a dark solid one is a felt marker. */
+        fun isHighlighter(pen: Pen, color: Int): Boolean {
+            if (pen != Pen.MARKER) return false
+            val light =
+                (AndroidColor.red(color) + AndroidColor.green(color) + AndroidColor.blue(color)) / 3
+            return light > 140 || AndroidColor.alpha(color) < 200
+        }
+
+        /** Plain name of a pen, as shown on its settings pop-up and in the add-pen list. */
+        fun displayName(pen: Pen, color: Int = AndroidColor.BLACK): String = when (pen) {
+            Pen.BALLPEN, Pen.REDBALLPEN, Pen.GREENBALLPEN, Pen.BLUEBALLPEN -> "Ballpoint"
+            Pen.FOUNTAIN -> "Fountain pen"
+            Pen.PENCIL -> "Pencil"
+            Pen.CHARCOAL -> "Charcoal"
+            Pen.BRUSH -> "Brush"
+            Pen.MARKER -> if (isHighlighter(pen, color)) "Highlighter" else "Marker"
+            Pen.CALLIGRAPHY -> "Calligraphy"
+            Pen.DASHED -> "Dashed"
+        }
+
+        /** The pens offered by the toolbar's add button, each with a sensible starting look. */
+        val ADDABLE: List<ToolbarPen> = listOf(
+            ToolbarPen("", Pen.BALLPEN, AndroidColor.BLACK, 5f),
+            ToolbarPen("", Pen.FOUNTAIN, AndroidColor.BLACK, 5f),
+            ToolbarPen("", Pen.PENCIL, AndroidColor.BLACK, 5f),
+            ToolbarPen("", Pen.CHARCOAL, AndroidColor.BLACK, 8f),
+            ToolbarPen("", Pen.BRUSH, AndroidColor.BLACK, 8f),
+            ToolbarPen("", Pen.CALLIGRAPHY, AndroidColor.BLACK, 8f),
+            ToolbarPen("", Pen.MARKER, AndroidColor.DKGRAY, 25f),
+            ToolbarPen("", Pen.MARKER, AndroidColor.LTGRAY, 40f),
         )
 
         /**

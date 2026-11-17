@@ -61,12 +61,11 @@ data class ToolbarLayout(
         /** References the stable seed ids of [ToolbarPen.DEFAULT_PENS]. */
         val DEFAULT = ToolbarLayout(
             scrollable = listOf(
-                "PEN:ball", "PEN:red", "PEN:blue", "PEN:green", "PEN:pencil", "PEN:brush",
-                "PEN:fountain", "SHAPE", "DIVIDER", "PEN:marker", "DIVIDER", "ERASER",
-                "DIVIDER", "SELECT", "DIVIDER", "IMAGE", "DIVIDER", "PASTE", "RESET_VIEW",
+                "PEN:ball", "PEN:fountain", "PEN:pencil", "PEN:brush", "PEN:felt", "PEN:marker",
+                "DIVIDER", "ERASER", "SELECT", "SHAPE", "DIVIDER", "IMAGE", "PASTE", "RESET_VIEW",
             ),
             pinned = listOf(
-                "DIVIDER", "UNDO", "REDO", "DIVIDER", "PAGE_NAV", "HOME", "DIVIDER", "MENU",
+                "UNDO", "REDO", "DIVIDER", "PAGE_NAV", "HOME", "MENU",
             ),
         )
     }

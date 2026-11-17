@@ -86,7 +86,8 @@ fun ToolbarContent(
 
     @Composable
     fun renderZone(names: List<String>) {
-        for (name in names) {
+        val lastPen = names.indexOfLast { it.startsWith(ToolbarPen.LAYOUT_PREFIX) }
+        for ((index, name) in names.withIndex()) {
             val element = ToolbarElements.resolve(name, settings.toolbarPens) ?: continue
             if (!element.visibleWhen(uiState, settings)) continue
             ToolbarElementView(
@@ -97,6 +98,7 @@ fun ToolbarContent(
                     pickMedia.launch(PickVisualMediaRequest(PickVisualMedia.ImageOnly))
                 },
             )
+            if (index == lastPen) AddPenButton(onAction)
         }
     }
 

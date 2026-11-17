@@ -125,8 +125,9 @@ object ToolbarElements {
     /** Builds the toolbar element for a pen preset. The StrokeMenu options come from the
      * preset itself — which colors/sizes appear is per-pen, edited in toolbar settings. */
     fun penElement(preset: ToolbarPen): PenElement = PenElement(
-        icon = penIcon(preset.pen),
-        contentDescription = preset.pen.penName,
+        icon = if (ToolbarPen.isHighlighter(preset.pen, preset.color))
+            IconRef.Drawable(R.drawable.highlighter) else penIcon(preset.pen),
+        contentDescription = ToolbarPen.displayName(preset.pen, preset.color),
         presetId = preset.id,
         pen = preset.pen,
         setting = preset.setting(),
