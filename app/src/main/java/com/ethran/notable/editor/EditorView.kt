@@ -1,5 +1,7 @@
 package com.ethran.notable.editor
 
+import com.ethran.notable.tips.TipPlace
+import com.ethran.notable.tips.TipHint
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -256,6 +258,14 @@ fun EditorView(
                 }
             }
             PositionedToolbar(viewModel = viewModel)
+            TipHint(
+                when {
+                    toolbarState.isContentsOpen -> TipPlace.Contents
+                    toolbarState.isSelectionActive -> TipPlace.Selection
+                    !toolbarState.isToolbarOpen -> TipPlace.ToolsHidden
+                    else -> TipPlace.Writing
+                }
+            )
             HorizontalScrollIndicator(viewModel = viewModel, page = page)
             ContentsPanel(viewModel = viewModel) { targetPageId, top ->
                 viewModel.onToolbarAction(ToolbarAction.SetContentsOpen(false))

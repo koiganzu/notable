@@ -108,6 +108,7 @@ fun ToolbarContent(
             contentDescription = "page template",
             onSelect = { onAction(ToolbarAction.ToggleBackgroundSelector(true)) },
         )
+        HelpButton(uiState, onAction)
     }
 
     if (settings.toolbarPosition == AppSettings.Position.Left) {

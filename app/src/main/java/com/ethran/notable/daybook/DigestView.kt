@@ -1,5 +1,7 @@
 package com.ethran.notable.daybook
 
+import com.ethran.notable.tips.TipPlace
+import com.ethran.notable.tips.TipHint
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
@@ -58,6 +60,7 @@ fun DigestView(
     var expandedId by remember { mutableStateOf<String?>(null) }
     var confirmDeleteId by remember { mutableStateOf<String?>(null) }
 
+    Box(Modifier.fillMaxSize()) {
     Column(
         Modifier
             .fillMaxSize()
@@ -146,6 +149,8 @@ fun DigestView(
                 item { Spacer(Modifier.height(32.dp)) }
             }
         }
+    }
+    TipHint(TipPlace.Digest)
     }
 }
 

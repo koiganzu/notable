@@ -42,6 +42,7 @@ data class AppSettings(
     val quickNavPages: List<String> = listOf(),
     val scribbleToEraseEnabled: Boolean = false,
     val circleToSelect: Boolean = true,
+    val showTips: Boolean = true,
     val toolbarPosition: Position = Position.Left,
     val smoothScroll: Boolean = true,
     val continuousZoom: Boolean = false,

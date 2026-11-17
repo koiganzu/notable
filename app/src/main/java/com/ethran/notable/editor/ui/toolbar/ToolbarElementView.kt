@@ -1,5 +1,8 @@
 package com.ethran.notable.editor.ui.toolbar
 
+import com.ethran.notable.tips.TipPlace
+import com.ethran.notable.tips.HelpDialog
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.foundation.layout.size
 import androidx.compose.ui.res.painterResource
 import androidx.compose.material.Icon
@@ -367,6 +370,8 @@ internal fun toolbarPopupOffset(): IntOffset = with(LocalDensity.current) {
 @Composable
 internal fun AddPenButton(onAction: (ToolbarAction) -> Unit) {
     var open by remember { mutableStateOf(false) }
+    // Told to the editor so the pen stops writing while the list is up.
+    LaunchedEffect(open) { onAction(ToolbarAction.SetOverlayOpen(open)) }
     val panel = RoundedCornerShape(16.dp)
     Box {
         ToolbarButton(text = "+", contentDescription = "add a pen", onSelect = { open = true })
@@ -418,5 +423,20 @@ internal fun AddPenButton(onAction: (ToolbarAction) -> Unit) {
                 }
             }
         }
+    }
+}
+
+/** The "?" on the toolbar: tips for what the reader is doing now, then the rest of the guide. */
+@Composable
+internal fun HelpButton(uiState: ToolbarUiState, onAction: (ToolbarAction) -> Unit) {
+    var open by remember { mutableStateOf(false) }
+    LaunchedEffect(open) { onAction(ToolbarAction.SetOverlayOpen(open)) }
+    ToolbarButton(text = "?", contentDescription = "tips", onSelect = { open = true })
+    if (open) {
+        HelpDialog(
+            current = if (uiState.isSelectionActive) listOf(TipPlace.Selection, TipPlace.Writing)
+            else listOf(TipPlace.Writing, TipPlace.Selection),
+            onDismiss = { open = false },
+        )
     }
 }

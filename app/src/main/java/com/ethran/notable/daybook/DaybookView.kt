@@ -1,5 +1,7 @@
 package com.ethran.notable.daybook
 
+import com.ethran.notable.tips.TipPlace
+import com.ethran.notable.tips.TipHint
 import android.Manifest
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -76,6 +78,7 @@ fun DaybookView(
         ActivityResultContracts.RequestPermission()
     ) { granted -> viewModel.onCalendarPermissionResult(granted) }
 
+    Box(Modifier.fillMaxSize()) {
     Column(
         Modifier
             .fillMaxSize()
@@ -219,6 +222,8 @@ fun DaybookView(
             }
             Spacer(Modifier.height(32.dp))
         }
+    }
+    TipHint(TipPlace.Today)
     }
 }
 

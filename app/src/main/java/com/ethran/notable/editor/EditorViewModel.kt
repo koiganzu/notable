@@ -126,6 +126,8 @@ data class ToolbarUiState(
     val isQuickNavOpen: Boolean = false,
     /** The Contents panel (headings and bookmarks) is showing. */
     val isContentsOpen: Boolean = false,
+    /** The add-pen list or the tips page is showing; the pen must not write through it. */
+    val isOverlayOpen: Boolean = false,
     /** Mirror of [CanvasEventBus.isResumed]. */
     val isResumed: Boolean = true,
     /** Mirror of [CanvasEventBus.hasWindowFocus]. */
@@ -151,7 +153,7 @@ data class ToolbarUiState(
                 !isSelectionGestureActive && !isSelectionActive &&
                 !(isMenuOpen || isEraserMenuOpen || isBackgroundSelectorModalOpen) &&
                 penMenuPresetId == null &&
-                !isQuickNavOpen && !isContentsOpen
+                !isQuickNavOpen && !isContentsOpen && !isOverlayOpen
 }
 
 
@@ -225,6 +227,7 @@ sealed class ToolbarAction {
 
     data class UpdateQuickNavOpen(val isOpen: Boolean) : ToolbarAction()
     data class SetContentsOpen(val isOpen: Boolean) : ToolbarAction()
+    data class SetOverlayOpen(val isOpen: Boolean) : ToolbarAction()
     object ToggleBookmark : ToolbarAction()
     object NavigateToDaybook : ToolbarAction()
 }
@@ -654,6 +657,7 @@ class EditorViewModel @Inject constructor(
                         isMenuOpen = false,
                         isEraserMenuOpen = false,
                         penMenuPresetId = null,
+                        isOverlayOpen = false,
                     )
                 }
                 saveToolbarState()
@@ -725,6 +729,9 @@ class EditorViewModel @Inject constructor(
             is ToolbarAction.UpdateQuickNavOpen -> {
                 _toolbarState.update { it.copy(isQuickNavOpen = action.isOpen) }
             }
+
+            is ToolbarAction.SetOverlayOpen ->
+                _toolbarState.update { it.copy(isOverlayOpen = action.isOpen) }
 
             is ToolbarAction.SetContentsOpen -> {
                 _toolbarState.update { it.copy(isContentsOpen = action.isOpen) }

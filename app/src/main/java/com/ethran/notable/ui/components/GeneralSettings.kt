@@ -54,6 +54,13 @@ fun GeneralSettings(
             })
 
         SettingToggleRow(
+            label = "Show tips as I go",
+            value = settings.showTips,
+            onToggle = { isChecked ->
+                onSettingsChange(settings.copy(showTips = isChecked))
+            })
+
+        SettingToggleRow(
             label = "Circle handwriting to lasso it",
             value = settings.circleToSelect,
             onToggle = { isChecked ->

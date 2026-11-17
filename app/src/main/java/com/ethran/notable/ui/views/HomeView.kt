@@ -1,5 +1,8 @@
 package com.ethran.notable.ui.views
 
+import com.ethran.notable.tips.HelpDialog
+import com.ethran.notable.tips.TipPlace
+import com.ethran.notable.tips.TipHint
 import com.ethran.notable.daybook.BooxNotesRow
 import com.ethran.notable.daybook.InkButton
 import com.ethran.notable.daybook.DigestDestination
@@ -150,6 +153,7 @@ fun LibraryContent(
     onOpenToday: () -> Unit = {},
     onOpenDigest: () -> Unit = {},
 ) {
+    Box(Modifier.fillMaxSize()) {
     Column(Modifier.fillMaxSize()) {
         Topbar {
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
@@ -158,6 +162,10 @@ fun LibraryContent(
                 InkButton("Today") { onOpenToday() }
                 Spacer(Modifier.width(10.dp))
                 InkButton("Digest") { onOpenDigest() }
+                Spacer(Modifier.width(10.dp))
+                var helpOpen by remember { mutableStateOf(false) }
+                InkButton("?") { helpOpen = true }
+                if (helpOpen) HelpDialog(listOf(TipPlace.Library)) { helpOpen = false }
                 Spacer(Modifier.width(10.dp))
                 BadgedBox(
                     badge = {
@@ -219,6 +227,8 @@ fun LibraryContent(
                 onPreviewMissing = onPreviewMissing
             )
         }
+    }
+    TipHint(TipPlace.Library)
     }
 
 
