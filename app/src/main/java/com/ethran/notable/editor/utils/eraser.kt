@@ -245,14 +245,25 @@ fun isCircleAroundStrokes(page: PageView, touchPoints: List<StrokePoint>, pen: P
     val height = box.height()
     if (width < 70f || height < 50f) return false
 
-    val first = touchPoints.first()
-    val last = touchPoints.last()
-    val gap = kotlin.math.hypot(first.x - last.x, first.y - last.y)
-    if (gap > kotlin.math.max(width, height) * 0.25f) return false
+    // Closed: somewhere in its last stretch the pen passes close to where it began. Hand-drawn
+    // loops rarely end exactly on their start; they stop short or run on past it.
+    val headEnd = (touchPoints.size * 0.15f).toInt().coerceAtLeast(1)
+    val tailStart = (touchPoints.size * 0.6f).toInt()
+    var gap = Float.MAX_VALUE
+    for (i in 0 until headEnd) {
+        val a = touchPoints[i]
+        for (j in tailStart until touchPoints.size) {
+            val b = touchPoints[j]
+            val d = kotlin.math.hypot(a.x - b.x, a.y - b.y)
+            if (d < gap) gap = d
+        }
+    }
+    if (gap > kotlin.math.max(width, height) * 0.35f) return false
 
-    // Once round, not a scribble or a spiral: an oval's edge is about 1.6 x (width + height).
+    // About once round, not a scribble or a spiral: an oval's edge is about 1.6 x (width +
+    // height), and an overlapped join adds some.
     val length = calculateStrokeLength(touchPoints)
-    if (length < (width + height) * 1.2f || length > (width + height) * 2.6f) return false
+    if (length < (width + height) * 1.1f || length > (width + height) * 3.2f) return false
 
     val loop = pointsToPath(touchPoints.map { SimplePointF(it.x, it.y) }).apply { close() }
     return selectStrokesFromPath(page.strokes, loop).isNotEmpty()

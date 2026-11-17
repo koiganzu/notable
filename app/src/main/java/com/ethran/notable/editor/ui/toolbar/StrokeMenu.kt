@@ -97,7 +97,7 @@ fun StrokeMenu(
             }
 
             val sizes = sizeOptions.map { it.second }.distinct().sorted()
-            if (sizes.size >= 2) {
+            if (sizes.size >= 2 && sizes.last().toInt() > sizes.first().toInt()) {
                 SliderLabel("Thickness", value.strokeSize.roundToInt().toString())
                 DiscreteThicknessSlider(
                     value = value.strokeSize,
@@ -310,6 +310,7 @@ private fun DiscreteThicknessSlider(
     val displayValues = values.distinct().sorted()
     val minVal = displayValues.first().toInt()
     val maxVal = displayValues.last().toInt()
+    if (maxVal <= minVal) return // nothing to slide between
 
 
     // Map each integer to a normalized position [0,1] along the slider
