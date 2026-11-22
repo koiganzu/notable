@@ -61,6 +61,13 @@ fun GeneralSettings(
             })
 
         SettingToggleRow(
+            label = "Hold the pen still at the end of a line to straighten it",
+            value = settings.smartStraightLine,
+            onToggle = { isChecked ->
+                onSettingsChange(settings.copy(smartStraightLine = isChecked))
+            })
+
+        SettingToggleRow(
             label = "Hold two fingers down to erase",
             value = settings.twoFingerHoldErase,
             onToggle = { isChecked ->

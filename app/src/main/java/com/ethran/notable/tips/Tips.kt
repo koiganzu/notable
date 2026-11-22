@@ -68,6 +68,8 @@ object Tips {
         Tip("write_swap", TipPlace.Writing, "Rest two fingers on the page and the pen erases until you lift them. A quick two-finger tap swaps pen and eraser for good."),
         Tip("write_pens", TipPlace.Writing, "The + after the pens adds another: fountain pen, pencil, brush, marker, highlighter."),
         Tip("write_template", TipPlace.Writing, "The layout button near the bottom of the panel changes this page's paper."),
+        Tip("write_line", TipPlace.Writing, "Hold the pen still for a moment at the end of a line and it snaps straight."),
+        Tip("write_toolbar", TipPlace.Writing, "Settings, Toolbar lets you add, remove and reorder every button on the tool panel."),
         Tip("write_pages", TipPlace.Writing, "Swipe left or right with one finger to turn the page."),
 
         Tip("hidden_open", TipPlace.ToolsHidden, "Swipe up or down along the left edge of the screen to bring the tools back."),
@@ -91,6 +93,7 @@ object Tips {
 
         Tip("digest_save", TipPlace.Digest, "Save text here from any app: select it, tap Share, then Save to Digest. Or copy it and use Save clipboard."),
         Tip("digest_split", TipPlace.Digest, "With a book or email in the other half of a split screen, copy a passage there and tap Save clipboard here."),
+        Tip("digest_group", TipPlace.Digest, "Group sorts a passage under a customer or topic. The chips at the top show one group at a time."),
         Tip("digest_note", TipPlace.Digest, "Tap a snippet to open a page beside it for your own handwritten notes."),
     )
 

@@ -55,7 +55,7 @@ class Converters {
 
 @Database(
     entities = [Folder::class, Notebook::class, Page::class, Stroke::class, Image::class, Kv::class, NotebookSyncState::class, PageSyncState::class, Heading::class, Bookmark::class, DayPage::class, Digest::class, PageText::class, Sticker::class],
-    version = 42,
+    version = 43,
     autoMigrations = [
         AutoMigration(19, 20),
         AutoMigration(20, 21),
@@ -85,7 +85,9 @@ class Converters {
         // Links between notebooks: heading.target
         AutoMigration(40, 41),
         // To-dos (heading.done, heading.text), handwriting search text and stickers
-        AutoMigration(41, 42)
+        AutoMigration(41, 42),
+        // Digest groups: digest.category
+        AutoMigration(42, 43)
     ], exportSchema = true
 )
 @TypeConverters(Converters::class)

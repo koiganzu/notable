@@ -268,3 +268,50 @@ fun isCircleAroundStrokes(page: PageView, touchPoints: List<StrokePoint>, pen: P
     val loop = pointsToPath(touchPoints.map { SimplePointF(it.x, it.y) }).apply { close() }
     return selectStrokesFromPath(page.strokes, loop).isNotEmpty()
 }
+
+
+/**
+ * Smart straight line: when the pen is held still at the end of a stroke for a moment, the
+ * stroke becomes a straight line from where it began to where the pen rested. Returns the new
+ * points, or null to keep the stroke as drawn. [times] are the input's timestamps (ms).
+ */
+fun straightenIfHeld(points: List<StrokePoint>, times: List<Long>): List<StrokePoint>? {
+    if (!GlobalAppSettings.current.smartStraightLine) return null
+    if (points.size < 8 || times.size != points.size) return null
+    val last = points.last()
+    val stillRadius = 9f
+    // Walk back from the end while the pen stays within a few pixels of where it stopped.
+    var k = points.size - 1
+    while (k > 0 && kotlin.math.hypot(points[k - 1].x - last.x, points[k - 1].y - last.y) <= stillRadius) k--
+    val held = times.last() - times[k]
+    if (held < 550 || k < 3) return null
+
+    val start = points.first()
+    val end = points[k]
+    val length = kotlin.math.hypot(end.x - start.x, end.y - start.y)
+    if (length < 90f) return null
+    // Only lines that were roughly straight already: a held curve or a word stays as written.
+    val dx = (end.x - start.x) / length
+    val dy = (end.y - start.y) / length
+    var worst = 0f
+    for (i in 0..k) {
+        val p = points[i]
+        val off = kotlin.math.abs((p.x - start.x) * dy - (p.y - start.y) * dx)
+        if (off > worst) worst = off
+    }
+    if (worst > length * 0.12f + 6f) return null
+
+    val pressures = points.subList(0, k + 1).mapNotNull { it.pressure }.sorted()
+    val pressure = pressures.getOrNull(pressures.size / 2)
+    val steps = (length / 3f).toInt().coerceAtLeast(2)
+    return (0..steps).map { i ->
+        val t = i.toFloat() / steps
+        StrokePoint(
+            x = start.x + (end.x - start.x) * t,
+            y = start.y + (end.y - start.y) * t,
+            pressure = pressure,
+            tiltX = start.tiltX,
+            tiltY = start.tiltY,
+        )
+    }
+}

@@ -44,6 +44,9 @@ data class AppSettings(
     val circleToSelect: Boolean = true,
     val showTips: Boolean = true,
     val twoFingerHoldErase: Boolean = true,
+    val smartStraightLine: Boolean = true,
+    /** The template, stickers and tips buttons have been added to a saved toolbar layout. */
+    val toolbarExtrasAdded: Boolean = false,
     val toolbarPosition: Position = Position.Left,
     val smoothScroll: Boolean = true,
     val continuousZoom: Boolean = false,

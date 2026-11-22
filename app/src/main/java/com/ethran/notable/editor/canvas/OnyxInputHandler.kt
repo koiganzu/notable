@@ -1,5 +1,6 @@
 package com.ethran.notable.editor.canvas
 
+import com.ethran.notable.editor.utils.straightenIfHeld
 import com.ethran.notable.ui.components.Breadcrumbs
 import com.ethran.notable.data.model.SimplePointF
 import com.ethran.notable.editor.utils.isCircleAroundStrokes
@@ -360,6 +361,7 @@ class OnyxInputHandler(
                 coroutineScope.launch(Dispatchers.Main.immediate) {
                     var dropped = false
                     var circled = false
+                    var straightened = false
                     CanvasEventBus.drawingInProgress.withLock {
                         val lock = System.currentTimeMillis()
                         log.d("lock obtained in ${lock - startTime} ms")
@@ -369,8 +371,11 @@ class OnyxInputHandler(
                             return@withLock
                         }
                         val viewport = page.viewport.value
-                        val scaledPoints =
+                        val drawnPoints =
                             copyInput(plist.points, viewport.scroll, viewport.zoom)
+                        val straight = straightenIfHeld(drawnPoints, plist.points.map { it.timestamp })
+                        straightened = straight != null
+                        val scaledPoints = straight ?: drawnPoints
                         val firstPointTime = plist.points.first().timestamp
                         if (isCircleAroundStrokes(page, scaledPoints, toolbarState.pen)) {
                             // A loop drawn round handwriting lassoes it instead of leaving ink.
@@ -383,7 +388,7 @@ class OnyxInputHandler(
                             circled = true
                             return@withLock
                         }
-                        val erasedByScribbleDirtyRect = handleScribbleToErase(
+                        val erasedByScribbleDirtyRect = if (straightened) null else handleScribbleToErase(
                             page,
                             scaledPoints,
                             history,
@@ -406,7 +411,7 @@ class OnyxInputHandler(
                                 scaledPoints
                             )
                             val width = (toolbarState.activePenSetting.strokeSize * viewport.zoom).toInt()
-                            drawCanvas.refreshManager.addFirmwareInk(
+                            if (!straightened) drawCanvas.refreshManager.addFirmwareInk(
                                 trackArea(plist).apply { inset(-width, -width) }
                             )
                         } else {
@@ -430,6 +435,11 @@ class OnyxInputHandler(
                             drawCanvas.refreshManager.commitErase(dirty, areaErase = true)
                         }
 
+                    }
+                    if (straightened) {
+                        // Replace the wobbly firmware ink with the straight line now on the page.
+                        val width = (toolbarState.activePenSetting.strokeSize * 2).toInt() + 6
+                        drawCanvas.refreshManager.refreshUi(trackArea(plist).apply { inset(-width, -width) })
                     }
                     if (circled) {
                         // Clear the firmware's ink of the loop; the selection box takes over.

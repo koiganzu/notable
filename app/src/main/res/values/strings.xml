@@ -266,6 +266,9 @@
     <string name="toolbar_element_select">Lasso select</string>
     <string name="toolbar_element_image">Insert image</string>
     <string name="toolbar_element_paste">Paste</string>
+    <string name="toolbar_element_template">Page template</string>
+    <string name="toolbar_element_stickers">Stickers</string>
+    <string name="toolbar_element_help">Tips</string>
     <string name="toolbar_element_reset_view">Reset view</string>
     <string name="toolbar_element_undo">Undo</string>
     <string name="toolbar_element_redo">Redo</string>

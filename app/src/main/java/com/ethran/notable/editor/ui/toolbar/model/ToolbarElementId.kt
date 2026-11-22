@@ -18,6 +18,7 @@ enum class ToolbarElementId {
 
     SHAPE, ERASER, SELECT, IMAGE, PASTE, RESET_VIEW,
     UNDO, REDO, PAGE_NAV, HOME, MENU,
+    TEMPLATE, STICKERS, HELP,
 
     /** Placeable pseudo-element: a vertical divider. May appear multiple times in a layout. */
     DIVIDER;

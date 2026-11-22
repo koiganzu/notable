@@ -1,5 +1,7 @@
 package com.ethran.notable.editor.ui.toolbar.model
 
+import compose.icons.feathericons.Smile
+import compose.icons.feathericons.Layout
 import androidx.compose.ui.graphics.Color
 import com.ethran.notable.R
 import com.ethran.notable.editor.ToolbarAction
@@ -100,6 +102,24 @@ object ToolbarElements {
             icon = IconRef.Drawable(R.drawable.menu),
             contentDescription = "menu",
             kind = CustomKind.MENU,
+        ),
+        ActionElement(
+            id = ToolbarElementId.TEMPLATE,
+            icon = IconRef.Vector(FeatherIcons.Layout),
+            contentDescription = "page template",
+            action = ToolbarAction.ToggleBackgroundSelector(true),
+        ),
+        CustomElement(
+            id = ToolbarElementId.STICKERS,
+            icon = IconRef.Vector(FeatherIcons.Smile),
+            contentDescription = "stickers",
+            kind = CustomKind.STICKERS,
+        ),
+        CustomElement(
+            id = ToolbarElementId.HELP,
+            icon = null,
+            contentDescription = "tips",
+            kind = CustomKind.HELP,
         ),
         DividerElement,
     ).associateBy { it.id }

@@ -1,5 +1,10 @@
 package com.ethran.notable.daybook
 
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
 import com.ethran.notable.tips.TipPlace
 import com.ethran.notable.tips.TipHint
 import android.content.ClipData
@@ -55,6 +60,19 @@ fun DigestView(
     val digests by viewModel.digests.collectAsStateWithLifecycle()
     val query by viewModel.query.collectAsStateWithLifecycle()
     val message by viewModel.message.collectAsStateWithLifecycle()
+    val groups by viewModel.groups.collectAsStateWithLifecycle()
+    val group by viewModel.group.collectAsStateWithLifecycle()
+    var groupingId by remember { mutableStateOf<String?>(null) }
+    groupingId?.let { id ->
+        GroupDialog(
+            groups = groups,
+            onPick = { name ->
+                groupingId = null
+                viewModel.setGroup(id, name)
+            },
+            onDismiss = { groupingId = null },
+        )
+    }
 
     // Which passage is shown in full, and which is one tap away from being deleted.
     var expandedId by remember { mutableStateOf<String?>(null) }
@@ -106,6 +124,16 @@ fun DigestView(
             message?.let {
                 Text(it, fontSize = 15.sp, color = Color.Black, modifier = Modifier.padding(top = 8.dp))
             }
+            if (groups.isNotEmpty()) {
+                Spacer(Modifier.height(10.dp))
+                androidx.compose.foundation.lazy.LazyRow {
+                    val chips = listOf<Pair<String, String?>>("All" to null) +
+                            groups.map { it to it } + ("Not grouped" to DigestViewModel.UNSORTED)
+                    items(chips) { (label, value) ->
+                        GroupChip(label, selected = group == value) { viewModel.showGroup(value) }
+                    }
+                }
+            }
             Spacer(Modifier.height(8.dp))
 
             if (digests.isEmpty()) {
@@ -136,6 +164,8 @@ fun DigestView(
                         ButtonGap()
                         InkButton("Copy") { copyToClipboard(context, digest.text) }
                         ButtonGap()
+                        InkButton(digest.category ?: "Group") { groupingId = digest.id }
+                        ButtonGap()
                         if (confirmDeleteId == digest.id) {
                             InkButton("Confirm delete", filled = true) {
                                 confirmDeleteId = null
@@ -164,5 +194,79 @@ private fun copyToClipboard(context: Context, text: String) {
     runCatching {
         context.getSystemService(ClipboardManager::class.java)
             ?.setPrimaryClip(ClipData.newPlainText("Digest", text))
+    }
+}
+
+
+@Composable
+private fun GroupChip(label: String, selected: Boolean, onClick: () -> Unit) {
+    Text(
+        label,
+        fontSize = 16.sp,
+        fontWeight = if (selected) androidx.compose.ui.text.font.FontWeight.Bold
+        else androidx.compose.ui.text.font.FontWeight.Normal,
+        color = if (selected) Color.White else Color.Black,
+        modifier = Modifier
+            .padding(end = 8.dp)
+            .background(if (selected) Color.Black else Color.White, RoundedCornerShape(50))
+            .border(2.dp, Color.Black, RoundedCornerShape(50))
+            .noRippleClickable { onClick() }
+            .padding(horizontal = 16.dp, vertical = 7.dp)
+    )
+}
+
+/** Files a passage under a group: an existing one, a new name, or none. */
+@Composable
+private fun GroupDialog(groups: List<String>, onPick: (String?) -> Unit, onDismiss: () -> Unit) {
+    var name by remember { mutableStateOf("") }
+    val panel = RoundedCornerShape(16.dp)
+    androidx.compose.ui.window.Dialog(onDismissRequest = onDismiss) {
+        Column(
+            Modifier
+                .width(420.dp)
+                .background(Color.White, panel)
+                .border(2.dp, Color.Black, panel)
+                .padding(18.dp)
+        ) {
+            Text("Group", fontSize = 22.sp, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
+            Spacer(Modifier.height(10.dp))
+            Box(
+                Modifier
+                    .fillMaxWidth()
+                    .border(2.dp, Color.Black, RoundedCornerShape(10.dp))
+                    .padding(12.dp)
+            ) {
+                if (name.isEmpty()) Text("New group, e.g. a customer", fontSize = 17.sp, color = Color.Gray)
+                BasicTextField(
+                    value = name,
+                    onValueChange = { name = it },
+                    singleLine = true,
+                    textStyle = TextStyle(fontSize = 17.sp, color = Color.Black),
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+            if (name.isNotBlank()) {
+                Spacer(Modifier.height(10.dp))
+                InkButton("Create \"${name.trim()}\"", filled = true) { onPick(name) }
+            }
+            Spacer(Modifier.height(8.dp))
+            Column(
+                Modifier
+                    .heightIn(max = 360.dp)
+                    .verticalScroll(rememberScrollState())
+            ) {
+                (groups.map { it to it } + ("No group" to null)).forEach { (label, value) ->
+                    Text(
+                        label,
+                        fontSize = 18.sp,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .noRippleClickable { onPick(value) }
+                            .padding(vertical = 12.dp)
+                    )
+                    Hairline()
+                }
+            }
+        }
     }
 }

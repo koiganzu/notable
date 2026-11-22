@@ -294,6 +294,10 @@ class EditorViewModel @Inject constructor(
     private val shownPageId = MutableStateFlow<String?>(null)
 
     init {
+        addToolbarExtrasOnce()
+    }
+
+    init {
         viewModelScope.launch {
             ClipboardStore.content.collect { setHasClipboard(it != null) }
         }
@@ -863,6 +867,28 @@ class EditorViewModel @Inject constructor(
                 CanvasEventBus.refreshUi.emit(Unit)
             }
         }
+    }
+
+    /**
+     * Toolbars saved before the template, stickers and tips buttons could be placed had them
+     * drawn in by hand. Add them to such a layout once, in front of undo, so none goes missing.
+     */
+    private fun addToolbarExtrasOnce() {
+        val settings = GlobalAppSettings.current
+        if (settings.toolbarExtrasAdded) return
+        val saved = settings.toolbarLayout
+        val updated = if (saved == null) settings.copy(toolbarExtrasAdded = true) else {
+            val extras = listOf("TEMPLATE", "STICKERS", "HELP")
+                .filter { it !in saved.pinned && it !in saved.scrollable }
+            val at = saved.pinned.indexOf("UNDO").let { if (it < 0) 0 else it }
+            val pinned = saved.pinned.toMutableList().apply { addAll(at, extras) }
+            settings.copy(
+                toolbarLayout = saved.copy(pinned = pinned).validated(settings.toolbarPens),
+                toolbarExtrasAdded = true,
+            )
+        }
+        GlobalAppSettings.update(updated)
+        viewModelScope.launch(Dispatchers.IO) { appRepository.kvProxy.setAppSettings(updated) }
     }
 
     /** Adds a pen to the toolbar, after the pens already there, and picks it up. */

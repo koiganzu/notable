@@ -117,6 +117,9 @@ fun ToolbarElementView(
             )
 
         is CustomElement -> when (element.kind) {
+            CustomKind.STICKERS -> StickerButton(onAction)
+            CustomKind.HELP -> HelpButton(uiState, onAction)
+
             CustomKind.IMAGE_PICKER ->
                 ToolbarButton(
                     iconId = (element.icon as? IconRef.Drawable)?.resId,

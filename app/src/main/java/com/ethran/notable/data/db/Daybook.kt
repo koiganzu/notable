@@ -39,6 +39,8 @@ data class Digest(
     @ColumnInfo(index = true) val day: String,
     val createdAt: Date = Date(),
     val notePageId: String? = null,
+    /** The group the reader filed it under, such as a customer or a topic. */
+    val category: String? = null,
 )
 
 @Dao
@@ -63,6 +65,9 @@ interface DaybookDao {
 
     @Query("DELETE FROM digest WHERE id = :id")
     suspend fun deleteDigest(id: String)
+
+    @Query("UPDATE digest SET category = :category WHERE id = :id")
+    suspend fun setDigestCategory(id: String, category: String?)
 
     @Query("UPDATE digest SET notePageId = :pageId WHERE id = :id")
     suspend fun setDigestNotePage(id: String, pageId: String?)

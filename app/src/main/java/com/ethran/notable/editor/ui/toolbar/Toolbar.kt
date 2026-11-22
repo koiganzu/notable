@@ -102,16 +102,6 @@ fun ToolbarContent(
         }
     }
 
-    val templateButton = @Composable {
-        ToolbarButton(
-            vectorIcon = FeatherIcons.Layout,
-            contentDescription = "page template",
-            onSelect = { onAction(ToolbarAction.ToggleBackgroundSelector(true)) },
-        )
-        StickerButton(onAction)
-        HelpButton(uiState, onAction)
-    }
-
     if (settings.toolbarPosition == AppSettings.Position.Left) {
         // Side panel: tools stacked down the left edge, page controls at the bottom.
         CompositionLocalProvider(LocalToolbarVertical provides true) {
@@ -146,7 +136,6 @@ fun ToolbarContent(
                     renderZone(layout.scrollable)
                     Spacer(Modifier.weight(1f))
                     ToolbarVerticalDivider()
-                    templateButton()
                     renderZone(layout.pinned)
                 }
                 Box(
@@ -194,7 +183,6 @@ fun ToolbarContent(
 
             // Right zone: pinned. Page template is one tap away, not buried in the menu.
             Row {
-                templateButton()
                 renderZone(layout.pinned)
             }
         }

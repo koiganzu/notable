@@ -163,6 +163,9 @@ class DaybookRepository @Inject constructor(
 
     suspend fun deleteDigest(id: String) = withContext(Dispatchers.IO) { dao.deleteDigest(id) }
 
+    suspend fun setDigestCategory(id: String, category: String?) =
+        withContext(Dispatchers.IO) { dao.setDigestCategory(id, category?.trim()?.takeIf { it.isNotEmpty() }) }
+
     /**
      * Opens the handwritten note page for a digest, creating it if needed. A new page starts
      * with the passage printed at the top, so notes can be written right beside it.
