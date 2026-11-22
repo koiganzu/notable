@@ -1,5 +1,10 @@
 package com.ethran.notable.editor.ui.toolbar
 
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.heightIn
+import compose.icons.feathericons.Smile
+import kotlinx.coroutines.launch
+import androidx.compose.runtime.collectAsState
 import com.ethran.notable.tips.TipPlace
 import com.ethran.notable.tips.HelpDialog
 import androidx.compose.runtime.LaunchedEffect
@@ -438,5 +443,108 @@ internal fun HelpButton(uiState: ToolbarUiState, onAction: (ToolbarAction) -> Un
             else listOf(TipPlace.Writing, TipPlace.Selection),
             onDismiss = { open = false },
         )
+    }
+}
+
+/** The smiley on the tool panel: saved stickers; tap one to put it on the page. */
+@Composable
+internal fun StickerButton(onAction: (ToolbarAction) -> Unit) {
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val store = remember {
+        dagger.hilt.android.EntryPointAccessors
+            .fromApplication(context, com.ethran.notable.daybook.DaybookEntryPoint::class.java)
+            .stickerStore()
+    }
+    val stickerFlow = remember(store) { store.all() }
+    var open by remember { mutableStateOf(false) }
+    var deleting by remember { mutableStateOf(false) }
+    val scope = androidx.compose.runtime.rememberCoroutineScope()
+    LaunchedEffect(open) { onAction(ToolbarAction.SetOverlayOpen(open)) }
+    val panel = RoundedCornerShape(16.dp)
+    Box {
+        ToolbarButton(
+            vectorIcon = compose.icons.FeatherIcons.Smile,
+            contentDescription = "stickers",
+            onSelect = { open = true; deleting = false },
+        )
+        if (open) {
+            val stickers by stickerFlow.collectAsState(initial = emptyList())
+            ScaledPopup(
+                offset = toolbarPopupOffset(),
+                onDismissRequest = { open = false },
+                properties = PopupProperties(focusable = true),
+                alignment = toolbarPopupAlignment()
+            ) {
+                Column(
+                    Modifier
+                        .width(440.dp)
+                        .background(Color.White, panel)
+                        .border(2.dp, Color.Black, panel)
+                        .padding(14.dp)
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            if (deleting) "Tap a sticker to delete it" else "Stickers",
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.weight(1f)
+                        )
+                        if (stickers.isNotEmpty()) {
+                            Text(
+                                if (deleting) "Done" else "Delete",
+                                fontSize = 15.sp,
+                                modifier = Modifier
+                                    .border(2.dp, Color.Black, RoundedCornerShape(50))
+                                    .noRippleClickable { deleting = !deleting }
+                                    .padding(horizontal = 14.dp, vertical = 5.dp)
+                            )
+                        }
+                    }
+                    Spacer(Modifier.height(10.dp))
+                    if (stickers.isEmpty()) {
+                        Text(
+                            "No stickers yet. Lasso some handwriting and tap the star to save it here.",
+                            fontSize = 17.sp
+                        )
+                    }
+                    androidx.compose.foundation.lazy.grid.LazyVerticalGrid(
+                        columns = androidx.compose.foundation.lazy.grid.GridCells.Adaptive(120.dp),
+                        modifier = Modifier.heightIn(max = 520.dp)
+                    ) {
+                        items(stickers.size) { index ->
+                            val sticker = stickers[index]
+                            Box(
+                                contentAlignment = Alignment.Center,
+                                modifier = Modifier
+                                    .padding(5.dp)
+                                    .height(100.dp)
+                                    .border(
+                                        if (deleting) 3.dp else 1.dp, Color.Black,
+                                        RoundedCornerShape(12.dp)
+                                    )
+                                    .noRippleClickable {
+                                        if (deleting) {
+                                            scope.launch { store.delete(sticker.id) }
+                                        } else {
+                                            open = false
+                                            onAction(ToolbarAction.PlaceSticker(sticker.id))
+                                        }
+                                    }
+                                    .padding(8.dp)
+                            ) {
+                                sticker.preview?.let {
+                                    androidx.compose.foundation.Image(
+                                        bitmap = it,
+                                        contentDescription = "sticker",
+                                        contentScale = androidx.compose.ui.layout.ContentScale.Fit,
+                                        modifier = Modifier.fillMaxSize()
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 }

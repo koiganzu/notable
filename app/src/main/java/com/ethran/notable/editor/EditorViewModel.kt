@@ -1,5 +1,6 @@
 package com.ethran.notable.editor
 
+import com.ethran.notable.daybook.HandwritingReader
 import com.ethran.notable.ui.components.Breadcrumbs
 import com.ethran.notable.editor.ui.toolbar.model.ToolbarLayout
 import android.content.Context
@@ -172,6 +173,7 @@ data class HeadingItem(
     /** For a link: the notebook it opens and that notebook's name. */
     val target: String? = null,
     val targetTitle: String? = null,
+    val done: Boolean = false,
 )
 
 /** One bookmarked page in the Contents panel. */
@@ -184,6 +186,7 @@ data class ContentsUiState(
     val headings: List<HeadingItem> = emptyList(),
     val keywords: List<HeadingItem> = emptyList(),
     val links: List<HeadingItem> = emptyList(),
+    val tasks: List<HeadingItem> = emptyList(),
     val bookmarks: List<BookmarkItem> = emptyList(),
     val isCurrentPageBookmarked: Boolean = false,
 )
@@ -200,6 +203,7 @@ sealed class ToolbarAction {
     data class PenButtonTapped(val presetId: String) : ToolbarAction()
     object ClosePenMenu : ToolbarAction()
     data class AddPen(val template: ToolbarPen) : ToolbarAction()
+    data class PlaceSticker(val stickerId: String) : ToolbarAction()
     data class RemovePen(val presetId: String) : ToolbarAction()
     data class ChangePenSetting(val presetId: String, val setting: PenSetting) : ToolbarAction()
     data class ChangeEraser(val eraser: Eraser) : ToolbarAction()
@@ -246,6 +250,8 @@ sealed class CanvasCommand {
     object ClearAllStrokes : CanvasCommand()
     object RefreshCanvas : CanvasCommand()
     data class CopyImageToCanvas(val uri: Uri) : CanvasCommand()
+    /** Put [strokes] (positioned from 0,0) on the page as a movable selection. */
+    data class PlaceStrokes(val strokes: List<com.ethran.notable.data.db.Stroke>) : CanvasCommand()
 }
 
 // --------------------------------------------------------
@@ -388,6 +394,7 @@ class EditorViewModel @Inject constructor(
                             ?.asImageBitmap()
                     }.getOrNull(),
                     kind = heading.kind,
+                    done = heading.done,
                     target = heading.target,
                     targetTitle = heading.target?.let { titles.getOrPut(it) {
                         if (it.startsWith(DAY_LINK)) "Planner, " + plannerDayLabel(it)
@@ -400,8 +407,10 @@ class EditorViewModel @Inject constructor(
             // Handwriting tied to a date is listed with the headings: it is a place in the
             // notebook worth jumping to, like they are.
             headings = items.filter {
-                it.kind != Heading.KIND_KEYWORD && it.kind != Heading.KIND_LINK
+                it.kind != Heading.KIND_KEYWORD && it.kind != Heading.KIND_LINK &&
+                        it.kind != Heading.KIND_TASK
             },
+            tasks = items.filter { it.kind == Heading.KIND_TASK },
             links = items.filter { it.kind == Heading.KIND_LINK },
             keywords = items.filter { it.kind == Heading.KIND_KEYWORD },
             bookmarks = bookmarks
@@ -480,13 +489,14 @@ class EditorViewModel @Inject constructor(
             return
         }
         val notebookId = bookId
+        val strokes = selectionState.selectedStrokes?.toList().orEmpty()
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 val png = ByteArrayOutputStream().use { out ->
                     snapshot.compress(Bitmap.CompressFormat.PNG, 100, out)
                     out.toByteArray()
                 }
-                markDao.insertHeading(
+                val heading =
                     Heading(
                         pageId = pageId,
                         notebookId = notebookId,
@@ -499,20 +509,77 @@ class EditorViewModel @Inject constructor(
                         day = day,
                         target = target,
                     )
-                )
+                markDao.insertHeading(heading)
                 showHint(
                     when (kind) {
+                        Heading.KIND_TASK -> "Added to To-do" +
+                                (if (day == null) "" else " for $day") + ". It shows on Today"
                         Heading.KIND_KEYWORD -> "Added to Keywords"
                         Heading.KIND_EVENT -> "Linked to $day"
                         Heading.KIND_LINK -> "Link saved. Find it under Links in Contents"
                         else -> "Added to Contents"
                     }
                 )
+                // Then read the handwriting, so search and the to-do list can show its words.
+                if (strokes.isNotEmpty()) {
+                    val words = runCatching { HandwritingReader.read(strokes) }
+                        .onFailure { if (it is CancellationException) throw it }
+                        .getOrNull()?.text?.takeIf { it.isNotBlank() }
+                    if (words != null) runCatching { markDao.setText(heading.id, words) }
+                }
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
                 log.e("Failed to save heading", e)
                 showHint("Couldn't save heading")
+            }
+        }
+    }
+
+    private fun extras() = dagger.hilt.android.EntryPointAccessors
+        .fromApplication(context, DaybookEntryPoint::class.java)
+
+    /** What the lassoed handwriting says. Null if the reader is unavailable (see the hint). */
+    suspend fun readSelection(): String? {
+        val strokes = selectionState.selectedStrokes?.toList().orEmpty()
+        if (strokes.isEmpty()) return ""
+        return withContext(Dispatchers.IO) { HandwritingReader.read(strokes)?.text }
+    }
+
+    fun readerProblem(): String? = HandwritingReader.lastProblem
+
+    /** Saves typed text (read from handwriting) into Digest. */
+    fun saveTextToDigest(text: String) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val title = bookId?.let { appRepository.bookRepository.getById(it)?.title }
+            val saved = extras().daybookRepository()
+                .addDigest(text, listOfNotNull("Handwriting", title).joinToString(", "))
+            showHint(if (saved != null) "Saved to Digest" else "Nothing to save")
+        }
+    }
+
+    /** Saves the lassoed handwriting as a reusable sticker. */
+    fun saveSelectionAsSticker() {
+        val strokes = selectionState.selectedStrokes?.toList().orEmpty()
+        val bitmap = selectionState.selectedBitmap
+        if (strokes.isEmpty() || bitmap == null) {
+            showHint("Lasso some handwriting first")
+            return
+        }
+        val snapshot = runCatching { scaledForPreview(bitmap) }.getOrNull() ?: return
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val png = ByteArrayOutputStream().use { out ->
+                    snapshot.compress(Bitmap.CompressFormat.PNG, 100, out)
+                    out.toByteArray()
+                }
+                extras().stickerStore().save(strokes, png)
+                showHint("Saved as a sticker. Find it under the smiley on the tool panel")
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                log.e("Failed to save sticker", e)
+                showHint("Couldn't save the sticker")
             }
         }
     }
@@ -753,6 +820,12 @@ class EditorViewModel @Inject constructor(
 
             is ToolbarAction.UpdateQuickNavOpen -> {
                 _toolbarState.update { it.copy(isQuickNavOpen = action.isOpen) }
+            }
+
+            is ToolbarAction.PlaceSticker -> viewModelScope.launch {
+                val strokes = extras().stickerStore().load(action.stickerId)
+                if (strokes.isNullOrEmpty()) showHint("That sticker is gone")
+                else sendCanvasCommand(CanvasCommand.PlaceStrokes(strokes))
             }
 
             is ToolbarAction.SetOverlayOpen ->

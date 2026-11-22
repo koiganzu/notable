@@ -1,5 +1,7 @@
 package com.ethran.notable.daybook
 
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.alpha
 import com.ethran.notable.tips.TipPlace
 import com.ethran.notable.tips.TipHint
 import android.Manifest
@@ -69,6 +71,7 @@ fun DaybookView(
     val digests by viewModel.digests.collectAsStateWithLifecycle()
     val noteDays by viewModel.noteDays.collectAsStateWithLifecycle()
     val linkedNotes by viewModel.linkedNotes.collectAsStateWithLifecycle()
+    val tasks by viewModel.tasks.collectAsStateWithLifecycle()
     val plannerPageId by viewModel.plannerPageId.collectAsStateWithLifecycle()
 
     // Re-read the calendar every time the screen comes back into view.
@@ -173,6 +176,22 @@ fun DaybookView(
                     Text("Nothing scheduled.", fontSize = 16.sp, color = Color.DarkGray)
 
                 else -> state.events.forEach { event -> EventRow(event) }
+            }
+
+            val open = tasks.count { !it.done }
+            SectionTitle("To-do ($open)")
+            if (tasks.isEmpty()) {
+                Text(
+                    "Nothing to do. Lasso handwriting in any note and tap the tick box to add it.",
+                    fontSize = 16.sp, color = Color.DarkGray
+                )
+            }
+            tasks.forEach { task ->
+                TaskRow(
+                    task = task,
+                    onToggle = { viewModel.setTaskDone(task.id, !task.done) },
+                    onOpen = { openPage(task.page) },
+                )
             }
 
             if (linkedNotes.isNotEmpty()) {
@@ -365,6 +384,57 @@ private fun EventRow(event: CalendarEvent) {
             Column(Modifier.weight(0.72f)) {
                 Text(event.title, fontSize = 17.sp, fontWeight = FontWeight.Bold, color = Color.Black)
                 event.location?.let { Text(it, fontSize = 14.sp, color = Color.DarkGray) }
+            }
+        }
+        Hairline()
+    }
+}
+
+
+/** One to-do: a box to tick, the handwriting (and what it says), and where it came from. */
+@Composable
+private fun TaskRow(task: TaskItem, onToggle: () -> Unit, onOpen: () -> Unit) {
+    Column(Modifier.fillMaxWidth()) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 8.dp)
+        ) {
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier
+                    .size(34.dp)
+                    .background(if (task.done) Color.Black else Color.White, RoundedCornerShape(6.dp))
+                    .border(2.dp, Color.Black, RoundedCornerShape(6.dp))
+                    .noRippleClickable { onToggle() }
+            ) {
+                if (task.done) Text("✓", color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Bold)
+            }
+            Spacer(Modifier.width(14.dp))
+            Column(
+                Modifier
+                    .weight(1f)
+                    .alpha(if (task.done) 0.45f else 1f)
+                    .noRippleClickable { onOpen() }
+            ) {
+                val picture = task.preview
+                if (picture != null) {
+                    Image(
+                        bitmap = picture,
+                        contentDescription = task.text ?: "To-do",
+                        contentScale = ContentScale.Fit,
+                        alignment = Alignment.CenterStart,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(max = 64.dp)
+                    )
+                }
+                val words = task.text
+                if (!words.isNullOrBlank()) {
+                    Text(words.replace('\n', ' '), fontSize = 15.sp, color = Color.DarkGray, maxLines = 2)
+                }
+                task.note?.let { Text(it, fontSize = 13.sp, fontWeight = FontWeight.Bold) }
             }
         }
         Hairline()

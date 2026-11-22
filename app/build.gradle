@@ -123,6 +123,8 @@ dependencies {
     debugImplementation libs.androidx.ui.test.manifest
     implementation libs.androidx.runtime
     implementation libs.kotlinx.serialization.json
+    // On-device handwriting recognition: search, to-do text and convert-to-text
+    implementation 'com.google.mlkit:digital-ink-recognition:18.1.0'
 
     implementation libs.androidx.navigation.compose
 

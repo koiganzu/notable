@@ -178,6 +178,7 @@ fun EditorView(
                     CanvasCommand.Undo -> editorControlTower.undo()
                     CanvasCommand.Redo -> editorControlTower.redo()
                     CanvasCommand.Paste -> editorControlTower.pasteFromClipboard()
+                    is CanvasCommand.PlaceStrokes -> editorControlTower.placeStrokes(command.strokes)
                     CanvasCommand.ResetView -> editorControlTower.resetZoomAndScroll()
                     CanvasCommand.ClearAllStrokes -> {
                         CanvasEventBus.clearPageSignal.emit(Unit)

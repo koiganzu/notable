@@ -108,6 +108,7 @@ fun ToolbarContent(
             contentDescription = "page template",
             onSelect = { onAction(ToolbarAction.ToggleBackgroundSelector(true)) },
         )
+        StickerButton(onAction)
         HelpButton(uiState, onAction)
     }
 

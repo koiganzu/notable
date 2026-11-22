@@ -1,5 +1,7 @@
 package com.ethran.notable.navigation
 
+import com.ethran.notable.daybook.SearchView
+import com.ethran.notable.daybook.SearchDestination
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
 import androidx.compose.foundation.layout.Box
@@ -161,6 +163,13 @@ fun NotableNavHost(
                 DaybookView(
                     goToLibrary = { appNavigator.goToLibrary(null) },
                     goToDigest = { appNavigator.goToDigest() },
+                    openPage = { page -> appNavigator.goToEditor(page.pageId, page.bookId) },
+                )
+                appNavigator.cleanCurrentPageId()
+            }
+            composable(route = SearchDestination.route) {
+                SearchView(
+                    goToLibrary = { appNavigator.goToLibrary(null) },
                     openPage = { page -> appNavigator.goToEditor(page.pageId, page.bookId) },
                 )
                 appNavigator.cleanCurrentPageId()

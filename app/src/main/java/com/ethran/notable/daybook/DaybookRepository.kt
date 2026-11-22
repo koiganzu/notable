@@ -38,6 +38,8 @@ import javax.inject.Singleton
 @dagger.hilt.InstallIn(dagger.hilt.components.SingletonComponent::class)
 interface DaybookEntryPoint {
     fun daybookRepository(): DaybookRepository
+    fun searchRepository(): SearchRepository
+    fun stickerStore(): StickerStore
 }
 
 /** A page to open in the editor, with the notebook it belongs to. */
@@ -124,6 +126,13 @@ class DaybookRepository @Inject constructor(
         db.markDao().headingsForDay(day.toString())
 
     /** Days in [month] that have handwriting tied to them. */
+    fun tasksForDay(day: LocalDate): Flow<List<Heading>> = db.markDao().tasksForDay(day.toString())
+
+    fun openTasks(): Flow<List<Heading>> = db.markDao().openTasks()
+
+    suspend fun setTaskDone(id: String, done: Boolean) =
+        withContext(Dispatchers.IO) { db.markDao().setDone(id, done) }
+
     fun daysWithLinkedNotes(month: YearMonth): Flow<Set<LocalDate>> =
         db.markDao().daysWithHeadings(month.atDay(1).toString(), month.atEndOfMonth().toString())
             .map(::toDays)

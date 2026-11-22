@@ -1,5 +1,6 @@
 package com.ethran.notable.ui.views
 
+import com.ethran.notable.daybook.SearchDestination
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -133,6 +134,7 @@ fun Library(
         onPreviewMissing = viewModel::onPreviewRequested,
         onOpenToday = { navController.navigate(DaybookDestination.route) },
         onOpenDigest = { navController.navigate(DigestDestination.route) },
+        onOpenSearch = { navController.navigate(SearchDestination.route) },
     )
 }
 
@@ -155,6 +157,7 @@ fun LibraryContent(
     onPreviewMissing: (String) -> Unit,
     onOpenToday: () -> Unit = {},
     onOpenDigest: () -> Unit = {},
+    onOpenSearch: () -> Unit = {},
 ) {
     Box(Modifier.fillMaxSize()) {
     Column(Modifier.fillMaxSize()) {
@@ -165,6 +168,8 @@ fun LibraryContent(
                 InkButton("Today") { onOpenToday() }
                 Spacer(Modifier.width(10.dp))
                 InkButton("Digest") { onOpenDigest() }
+                Spacer(Modifier.width(10.dp))
+                InkButton("Search") { onOpenSearch() }
                 Spacer(Modifier.width(10.dp))
                 var helpOpen by remember { mutableStateOf(false) }
                 InkButton("?") { helpOpen = true }

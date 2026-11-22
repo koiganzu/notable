@@ -54,8 +54,8 @@ class Converters {
 
 
 @Database(
-    entities = [Folder::class, Notebook::class, Page::class, Stroke::class, Image::class, Kv::class, NotebookSyncState::class, PageSyncState::class, Heading::class, Bookmark::class, DayPage::class, Digest::class],
-    version = 41,
+    entities = [Folder::class, Notebook::class, Page::class, Stroke::class, Image::class, Kv::class, NotebookSyncState::class, PageSyncState::class, Heading::class, Bookmark::class, DayPage::class, Digest::class, PageText::class, Sticker::class],
+    version = 42,
     autoMigrations = [
         AutoMigration(19, 20),
         AutoMigration(20, 21),
@@ -83,7 +83,9 @@ class Converters {
         // Adds `kind` and `day` to `Heading`, for keywords and handwriting tied to a date.
         AutoMigration(39, 40),
         // Links between notebooks: heading.target
-        AutoMigration(40, 41)
+        AutoMigration(40, 41),
+        // To-dos (heading.done, heading.text), handwriting search text and stickers
+        AutoMigration(41, 42)
     ], exportSchema = true
 )
 @TypeConverters(Converters::class)
@@ -99,6 +101,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun pageSyncStateDao(): PageSyncStateDao
     abstract fun markDao(): MarkDao
     abstract fun daybookDao(): DaybookDao
+    abstract fun extrasDao(): ExtrasDao
 
 //    companion object {
 //        private var INSTANCE: AppDatabase? = null

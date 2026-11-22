@@ -57,6 +57,7 @@ class Tip(val id: String, val place: TipPlace, val text: String)
 object Tips {
     val all = listOf(
         Tip("lib_new", TipPlace.Library, "Tap + under Notebooks to start a notebook. Today is your planner and calendar; Digest is where saved snippets go."),
+        Tip("lib_search", TipPlace.Library, "Search reads your handwriting and finds it in every notebook. The first search takes a while as it reads your pages."),
         Tip("lib_boox", TipPlace.Library, "BOOX notebooks are the ones from the tablet's own Notes app. Tapping one opens it there."),
         Tip("lib_split", TipPlace.Library, "To read and write side by side, open your book or email, swipe down from the top right corner, tap Split Screen, then pick this app for the other half."),
         Tip("lib_template", TipPlace.Library, "Each notebook can have its own paper: dots, lines, or a sales layout such as Meeting notes."),
@@ -76,12 +77,16 @@ object Tips {
         Tip("sel_date", TipPlace.Selection, "The calendar button ties this to a date. It then shows up on Today for that day."),
         Tip("sel_link", TipPlace.Selection, "The chain button links this to another notebook or to a day's planner page. Follow it later from Contents, under Links."),
         Tip("sel_digest", TipPlace.Selection, "Over a PDF, the book button copies the printed text underneath into Digest."),
+        Tip("sel_task", TipPlace.Selection, "The tick box adds this to your to-do list, with a due date if you like. To-dos show on Today until you tick them off."),
+        Tip("sel_text", TipPlace.Selection, "The T button turns this handwriting into typed text, to copy or save to Digest."),
+        Tip("sel_sticker", TipPlace.Selection, "The star saves this as a sticker. Stamp it on any page from the smiley on the tool panel."),
         Tip("sel_move", TipPlace.Selection, "Drag the selection to move it. Double-tap it to make a copy."),
 
         Tip("con_jump", TipPlace.Contents, "Tap any entry to jump straight to it. Swipe the panel left to close it."),
         Tip("con_bookmark", TipPlace.Contents, "The button at the bottom bookmarks the page you are on."),
 
         Tip("today_page", TipPlace.Today, "Open planner page gives each day its own page to write on. Tap any date to see that day."),
+        Tip("today_todo", TipPlace.Today, "Tap the box to tick off a to-do, or tap the handwriting to jump to the note it came from."),
         Tip("today_calendar", TipPlace.Today, "Meetings come from the calendars synced to this tablet. If none show, add your account in the tablet's settings."),
 
         Tip("digest_save", TipPlace.Digest, "Save text here from any app: select it, tap Share, then Save to Digest. Or copy it and use Save clipboard."),

@@ -1,5 +1,10 @@
 package com.ethran.notable.editor.ui
 
+import kotlinx.coroutines.launch
+import androidx.compose.runtime.rememberCoroutineScope
+import compose.icons.feathericons.Star
+import compose.icons.feathericons.Type
+import compose.icons.feathericons.CheckSquare
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.material.Text
@@ -97,6 +102,45 @@ fun SelectedBitmap(
     // The list of notebooks for linking the selection to one is showing.
     var isPickingLink by remember { mutableStateOf(false) }
     var isPickingPlannerDay by remember { mutableStateOf(false) }
+    var isPickingTaskDay by remember { mutableStateOf(false) }
+    var isPickingTaskDate by remember { mutableStateOf(false) }
+    // Convert to text: a reading in progress, then its result (a leading \u0000 marks a problem).
+    var isReading by remember { mutableStateOf(false) }
+    var readText by remember { mutableStateOf<String?>(null) }
+    val scope = rememberCoroutineScope()
+    if (isPickingTaskDay) {
+        TaskDueDialog(
+            onPick = { day ->
+                isPickingTaskDay = false
+                controlTower.markSelectionAsTask(day?.toString())
+            },
+            onPickDate = {
+                isPickingTaskDay = false
+                isPickingTaskDate = true
+            },
+            onDismiss = { isPickingTaskDay = false },
+        )
+    }
+    if (isPickingTaskDate) {
+        DatePickerDialog(
+            title = "To-do due on…",
+            onPick = { day ->
+                isPickingTaskDate = false
+                controlTower.markSelectionAsTask(day.toString())
+            },
+            onDismiss = { isPickingTaskDate = false },
+        )
+    }
+    if (isReading) {
+        ReadTextDialog(
+            text = readText,
+            onDigest = { text ->
+                isReading = false
+                controlTower.saveTextToDigest(text)
+            },
+            onDismiss = { isReading = false },
+        )
+    }
     if (isPickingLink) {
         LinkPickerDialog(
             loadTargets = { controlTower.linkTargets() },
@@ -202,16 +246,16 @@ fun SelectedBitmap(
                 val maxY = (screen.height - menuSize.height).coerceAtLeast(minY)
                 val y = (if (above >= minY) above else below).coerceIn(minY, maxY)
                 val offset = IntOffset(x, y)
-                // Overlay buttons near the selection box
-                Row(
+                // Overlay buttons near the selection box: marks on top, editing below.
+                Column(
                     modifier = Modifier
                         .offset { offset }
                         .onSizeChanged { menuSize = it }
                         .background(Color.White, RoundedCornerShape(12.dp))
                         .border(2.dp, Color.Black, RoundedCornerShape(12.dp))
                         .padding(toolbarPadding.dp)
-                        .height(BUTTON_SIZE.dp)
                 ) {
+                Row(Modifier.height(BUTTON_SIZE.dp)) {
                     ToolbarButton(
                         vectorIcon = FeatherIcons.Hash,
                         isSelected = false,
@@ -241,10 +285,41 @@ fun SelectedBitmap(
                         modifier = Modifier.height(BUTTON_SIZE.dp)
                     )
                     ToolbarButton(
+                        vectorIcon = FeatherIcons.CheckSquare,
+                        isSelected = false,
+                        onSelect = { isPickingTaskDay = true },
+                        contentDescription = "Add to to-do list",
+                        modifier = Modifier.height(BUTTON_SIZE.dp)
+                    )
+                    ToolbarButton(
                         vectorIcon = FeatherIcons.BookOpen,
                         isSelected = false,
                         onSelect = { controlTower.digestSelection() },
                         contentDescription = "Save document text to Digest",
+                        modifier = Modifier.height(BUTTON_SIZE.dp)
+                    )
+                }
+                Row(Modifier.height(BUTTON_SIZE.dp)) {
+                    ToolbarButton(
+                        vectorIcon = FeatherIcons.Type,
+                        isSelected = false,
+                        onSelect = {
+                            readText = null
+                            isReading = true
+                            scope.launch {
+                                readText = controlTower.readSelection()
+                                    ?: (controlTower.readerProblem() ?: "Couldn't read that")
+                                        .let { "\u0000$it" }
+                            }
+                        },
+                        contentDescription = "Convert handwriting to text",
+                        modifier = Modifier.height(BUTTON_SIZE.dp)
+                    )
+                    ToolbarButton(
+                        vectorIcon = FeatherIcons.Star,
+                        isSelected = false,
+                        onSelect = { controlTower.saveSelectionAsSticker() },
+                        contentDescription = "Save as a sticker",
                         modifier = Modifier.height(BUTTON_SIZE.dp)
                     )
                     ToolbarButton(
@@ -295,6 +370,7 @@ fun SelectedBitmap(
                         onSelect = { controlTower.duplicateSelection() },
                         modifier = Modifier.height(BUTTON_SIZE.dp)
                     )
+                }
                 }
             }
         }
@@ -371,4 +447,119 @@ private fun LinkPickerDialog(
             }
         }
     }
+}
+
+
+/** When a to-do is due: today, tomorrow, a picked date, or no date. */
+@Composable
+private fun TaskDueDialog(
+    onPick: (java.time.LocalDate?) -> Unit,
+    onPickDate: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    val panel = RoundedCornerShape(16.dp)
+    Dialog(onDismissRequest = onDismiss) {
+        Column(
+            Modifier
+                .width(380.dp)
+                .background(Color.White, panel)
+                .border(2.dp, Color.Black, panel)
+                .padding(18.dp)
+        ) {
+            Text("Add to to-do", fontSize = 22.sp, fontWeight = FontWeight.Bold)
+            Spacer(Modifier.height(12.dp))
+            val today = java.time.LocalDate.now()
+            listOf<Pair<String, () -> Unit>>(
+                "Today" to { onPick(today) },
+                "Tomorrow" to { onPick(today.plusDays(1)) },
+                "Pick a date…" to onPickDate,
+                "No date" to { onPick(null) },
+            ).forEach { (label, action) ->
+                Text(
+                    label,
+                    fontSize = 19.sp,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .noRippleClickable { action() }
+                        .padding(vertical = 13.dp)
+                )
+                Box(
+                    Modifier
+                        .fillMaxWidth()
+                        .height(1.dp)
+                        .background(Color.Gray)
+                )
+            }
+        }
+    }
+}
+
+/** The handwriting as typed text, to copy or save to Digest. Null [text] means still reading. */
+@Composable
+private fun ReadTextDialog(
+    text: String?,
+    onDigest: (String) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    val clipboard = androidx.compose.ui.platform.LocalClipboardManager.current
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val panel = RoundedCornerShape(16.dp)
+    val problem = text?.startsWith("\u0000") == true
+    var edited by remember(text) { mutableStateOf(if (problem) "" else text.orEmpty()) }
+    Dialog(onDismissRequest = onDismiss) {
+        Column(
+            Modifier
+                .width(480.dp)
+                .background(Color.White, panel)
+                .border(2.dp, Color.Black, panel)
+                .padding(18.dp)
+        ) {
+            Text("Handwriting as text", fontSize = 22.sp, fontWeight = FontWeight.Bold)
+            Spacer(Modifier.height(12.dp))
+            when {
+                text == null -> Text("Reading…", fontSize = 18.sp)
+                problem -> Text(text.drop(1), fontSize = 18.sp)
+                text.isBlank() -> Text("No writing found in the selection.", fontSize = 18.sp)
+                else -> {
+                    Text("Fix anything it misread, then copy it.", fontSize = 15.sp, color = Color.DarkGray)
+                    Spacer(Modifier.height(8.dp))
+                    androidx.compose.foundation.text.BasicTextField(
+                        value = edited,
+                        onValueChange = { edited = it },
+                        textStyle = androidx.compose.ui.text.TextStyle(fontSize = 19.sp, color = Color.Black),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(min = 80.dp, max = 320.dp)
+                            .border(2.dp, Color.Black, RoundedCornerShape(10.dp))
+                            .padding(12.dp)
+                    )
+                    Spacer(Modifier.height(14.dp))
+                    Row {
+                        DialogPill("Copy", filled = true) {
+                            clipboard.setText(androidx.compose.ui.text.AnnotatedString(edited))
+                            android.widget.Toast.makeText(context, "Copied", android.widget.Toast.LENGTH_SHORT).show()
+                            onDismiss()
+                        }
+                        Spacer(Modifier.width(10.dp))
+                        DialogPill("Save to Digest") { onDigest(edited) }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun DialogPill(label: String, filled: Boolean = false, onClick: () -> Unit) {
+    Text(
+        label,
+        fontSize = 17.sp,
+        fontWeight = FontWeight.Bold,
+        color = if (filled) Color.White else Color.Black,
+        modifier = Modifier
+            .background(if (filled) Color.Black else Color.White, RoundedCornerShape(50))
+            .border(2.dp, Color.Black, RoundedCornerShape(50))
+            .noRippleClickable { onClick() }
+            .padding(horizontal = 20.dp, vertical = 9.dp)
+    )
 }

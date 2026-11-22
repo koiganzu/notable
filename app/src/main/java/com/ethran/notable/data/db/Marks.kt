@@ -43,12 +43,17 @@ class Heading(
     @ColumnInfo(index = true) val day: String? = null,
     /** For a link: the id of the notebook it opens; null otherwise. */
     val target: String? = null,
+    /** For a to-do: ticked off. */
+    @ColumnInfo(defaultValue = "0") val done: Boolean = false,
+    /** What the handwriting says, as read by the recognizer; for search and to-do lists. */
+    val text: String? = null,
 ) {
     companion object {
         const val KIND_HEADING = "heading"
         const val KIND_KEYWORD = "keyword"
         const val KIND_EVENT = "event"
         const val KIND_LINK = "link"
+        const val KIND_TASK = "task"
     }
 }
 
@@ -81,8 +86,23 @@ interface MarkDao {
     @Query("SELECT * FROM heading WHERE pageId = :pageId")
     fun headingsForPage(pageId: String): Flow<List<Heading>>
 
-    @Query("SELECT * FROM heading WHERE day = :day ORDER BY createdAt")
+    @Query("SELECT * FROM heading WHERE day = :day AND kind != 'task' ORDER BY createdAt")
     fun headingsForDay(day: String): Flow<List<Heading>>
+
+    @Query("SELECT * FROM heading WHERE kind = 'task' AND day = :day ORDER BY createdAt")
+    fun tasksForDay(day: String): Flow<List<Heading>>
+
+    @Query("SELECT * FROM heading WHERE kind = 'task' AND done = 0 ORDER BY day, createdAt")
+    fun openTasks(): Flow<List<Heading>>
+
+    @Query("UPDATE heading SET done = :done WHERE id = :id")
+    suspend fun setDone(id: String, done: Boolean)
+
+    @Query("UPDATE heading SET text = :text WHERE id = :id")
+    suspend fun setText(id: String, text: String)
+
+    @Query("SELECT * FROM heading WHERE text LIKE '%' || :q || '%' LIMIT 100")
+    suspend fun searchHeadings(q: String): List<Heading>
 
     @Query("SELECT DISTINCT day FROM heading WHERE day BETWEEN :from AND :to")
     fun daysWithHeadings(from: String, to: String): Flow<List<String>>

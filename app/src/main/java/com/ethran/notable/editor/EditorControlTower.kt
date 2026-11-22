@@ -284,6 +284,15 @@ class EditorControlTower(
 
     suspend fun linkTargets() = viewModel.linkTargets()
 
+    /** Adds the current selection to the to-do list, due on [day] (ISO date) or undated. */
+    fun markSelectionAsTask(day: String?) =
+        viewModel.addHeadingFromSelection(kind = Heading.KIND_TASK, day = day)
+
+    suspend fun readSelection(): String? = viewModel.readSelection()
+    fun readerProblem(): String? = viewModel.readerProblem()
+    fun saveTextToDigest(text: String) = viewModel.saveTextToDigest(text)
+    fun saveSelectionAsSticker() = viewModel.saveSelectionAsSticker()
+
     /** Adds the current selection to the notebook's keyword index. */
     fun markSelectionAsKeyword() =
         viewModel.addHeadingFromSelection(kind = Heading.KIND_KEYWORD)
@@ -314,10 +323,31 @@ class EditorControlTower(
 
 
     fun pasteFromClipboard() {
+        val content = clipboardStore.get() ?: return
+        placeContent(content.strokes, content.images, "Pasted content from clipboard")
+    }
+
+    /**
+     * Places a sticker's strokes (positioned from 0,0) in the middle of the screen as a
+     * selection, so it can be dragged into place.
+     */
+    fun placeStrokes(strokes: List<com.ethran.notable.data.db.Stroke>) {
+        if (strokes.isEmpty()) return
+        val width = strokes.maxOf { it.right } - strokes.minOf { it.left }
+        val height = strokes.maxOf { it.bottom } - strokes.minOf { it.top }
+        val x = ((page.viewWidth - width) / 2f).coerceAtLeast(40f)
+        val y = ((page.viewHeight - height) / 3f).coerceAtLeast(40f)
+        val shifted = strokes.map { offsetStroke(it, Offset(x, y)) }
+        placeContent(shifted, emptyList(), "Sticker added. Drag it into place")
+    }
+
+    private fun placeContent(
+        strokes: List<com.ethran.notable.data.db.Stroke>,
+        images: List<com.ethran.notable.data.db.Image>,
+        hint: String,
+    ) {
         // finish ongoing movement
         applySelectionDisplace()
-
-        val (strokes, images) = clipboardStore.get() ?: return
 
         val now = Date()
         val scrollPos = page.scroll
@@ -357,7 +387,7 @@ class EditorControlTower(
         )
         viewModel.selectionState.placementMode = PlacementMode.Paste
 
-        showHint("Pasted content from clipboard")
+        showHint(hint)
     }
 
     override fun showHint(text: String) = viewModel.showHint(text)

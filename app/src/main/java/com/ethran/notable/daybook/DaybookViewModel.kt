@@ -28,6 +28,16 @@ import java.time.YearMonth
 import javax.inject.Inject
 
 /** A piece of handwriting tied to a day, and the page it is on. */
+/** A to-do on Today: its handwriting, what it says, and why it is listed (overdue, no date). */
+data class TaskItem(
+    val id: String,
+    val page: PageRef,
+    val preview: ImageBitmap?,
+    val text: String?,
+    val done: Boolean,
+    val note: String?,
+)
+
 data class LinkedNote(val id: String, val page: PageRef, val preview: ImageBitmap?)
 
 data class DaybookUiState(
@@ -37,6 +47,47 @@ data class DaybookUiState(
     val hasCalendarAccess: Boolean = false,
     /** Events on the selected day. */
     val events: List<CalendarEvent> = emptyList(),
+    /**
+     * To-dos for the selected day. On today itself, also every open to-do from earlier days
+     * and every open one with no date, so nothing slips.
+     */
+    val tasks: StateFlow<List<TaskItem>> = selectedDay
+        .flatMapLatest { day ->
+            combine(repository.tasksForDay(day), repository.openTasks()) { forDay, open ->
+                val today = LocalDate.now()
+                val carried = if (day != today) emptyList() else open.filter {
+                    val due = it.day?.let { d -> runCatching { LocalDate.parse(d) }.getOrNull() }
+                    due == null || due.isBefore(today)
+                }
+                (carried + forDay).distinctBy { it.id }.map { task ->
+                    val due = task.day?.let { d -> runCatching { LocalDate.parse(d) }.getOrNull() }
+                    TaskItem(
+                        id = task.id,
+                        page = PageRef(task.pageId, task.notebookId),
+                        preview = runCatching {
+                            BitmapFactory.decodeByteArray(task.preview, 0, task.preview.size)
+                                ?.asImageBitmap()
+                        }.getOrNull(),
+                        text = task.text,
+                        done = task.done,
+                        note = when {
+                            due == null -> "No date"
+                            due != day -> "From " + due.format(
+                                java.time.format.DateTimeFormatter.ofPattern("EEE d MMM")
+                            )
+                            else -> null
+                        },
+                    )
+                }.sortedBy { it.done }
+            }
+        }
+        .flowOn(Dispatchers.IO)
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
+    fun setTaskDone(id: String, done: Boolean) {
+        viewModelScope.launch { repository.setTaskDone(id, done) }
+    }
+
     /** Days of the shown month that have calendar events. */
     val eventDays: Set<LocalDate> = emptySet(),
     val isOpeningPage: Boolean = false,

@@ -42,7 +42,7 @@ import com.ethran.notable.editor.HeadingItem
 import com.ethran.notable.editor.ToolbarAction
 import com.ethran.notable.ui.noRippleClickable
 
-private enum class ContentsTab { Headings, Keywords, Links, Bookmarks }
+private enum class ContentsTab { Headings, Keywords, Tasks, Links, Bookmarks }
 
 /**
  * Side panel listing the open notebook's headings and bookmarked pages. Tapping an entry
@@ -172,6 +172,11 @@ private fun ContentsPanelBody(
                 modifier = Modifier.weight(1f),
             ) { tab = ContentsTab.Keywords }
             TabLabel(
+                text = "To-do (${contents.tasks.count { !it.done }})",
+                selected = tab == ContentsTab.Tasks,
+                modifier = Modifier.weight(1f),
+            ) { tab = ContentsTab.Tasks }
+            TabLabel(
                 text = "Links (${contents.links.size})",
                 selected = tab == ContentsTab.Links,
                 modifier = Modifier.weight(1f),
@@ -215,6 +220,20 @@ private fun ContentsPanelBody(
                             isCurrentPage = keyword.pageId == currentPageId,
                             onOpen = { onJump(keyword.pageId, keyword.top) },
                             onDelete = { onDeleteHeading(keyword.id) },
+                        )
+                    }
+                }
+
+                ContentsTab.Tasks -> {
+                    if (contents.tasks.isEmpty()) {
+                        EmptyNote("No to-dos in this notebook. Lasso a line, then tap the tick box.")
+                    }
+                    contents.tasks.forEach { task ->
+                        HeadingRow(
+                            heading = task,
+                            isCurrentPage = task.pageId == currentPageId,
+                            onOpen = { onJump(task.pageId, task.top) },
+                            onDelete = { onDeleteHeading(task.id) },
                         )
                     }
                 }
