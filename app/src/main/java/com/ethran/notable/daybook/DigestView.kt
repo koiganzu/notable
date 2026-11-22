@@ -1,5 +1,6 @@
 package com.ethran.notable.daybook
 
+import com.ethran.notable.ui.noRippleClickable
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.heightIn
