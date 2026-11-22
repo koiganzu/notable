@@ -1,0 +1,117 @@
+Run 28 for e3442c8f806b6a690fc2c2de2af95ddfd6ccca90
+79:> Task :app:compileDebugKotlin FAILED
+80:e: file:///home/runner/work/notable/notable/app/src/main/java/com/ethran/notable/daybook/DigestView.kt:213:14 Unresolved reference 'noRippleClickable' on receiver of type 'Modifier'.
+81:e: file:///home/runner/work/notable/notable/app/src/main/java/com/ethran/notable/daybook/DigestView.kt:264:30 Unresolved reference 'noRippleClickable' on receiver of type 'Modifier'.
+88:* What went wrong:
+108:BUILD FAILED in 4m 35s
+---- last 120 lines ----
+Fetching distribution.
+Downloading https://services.gradle.org/distributions/gradle-9.8.2-bin.zip
+..............10%..............20%...............30%..............40%...............50%..............60%...............70%..............80%...............90%..............100%
+
+Welcome to Gradle 9.8.2!
+
+Here are the highlights of this release:
+ - Java 27 support
+ - Maven mirror settings reuse
+ - Linked problem locations in build output
+
+For more details see https://docs.gradle.org/9.8.2/release-notes.html
+
+Starting a Gradle Daemon (subsequent builds will be faster)
+Calculating task graph as no cached configuration is available for tasks: assembleDebug
+> Task :app:preBuild UP-TO-DATE
+> Task :app:generateDebugAssets UP-TO-DATE
+> Task :app:preDebugBuild UP-TO-DATE
+> Task :app:mergeDebugNativeDebugMetadata NO-SOURCE
+> Task :app:processDebugGoogleServices
+> Task :app:generateDebugResources
+> Task :app:generateDebugBuildConfig
+> Task :app:packageDebugResources
+> Task :app:generateDebugGlobalSynthetics
+> Task :app:javaPreCompileDebug
+> Task :app:desugarDebugFileDependencies
+> Task :app:processDebugNavigationResources
+> Task :app:parseDebugLocalResources
+> Task :app:mergeDebugAssets
+> Task :app:generateDebugRFile
+> Task :app:compressDebugAssets
+> Task :app:mapDebugSourceSetPaths
+> Task :app:checkDebugAarMetadata
+> Task :app:compileDebugNavigationResources
+> Task :app:createDebugCompatibleScreenManifests
+> Task :app:extractDeepLinksDebug
+> Task :app:checkDebugDuplicateClasses
+> Task :app:processDebugMainManifest
+
+> Task :app:mergeDebugResources
+/home/runner/.gradle/caches/9.8.2/transforms/14c6e10d95c6dfdd43060f7019589b2b/transformed/ui/res/values-pt/values-pt.xml:8:4: Multiple substitutions specified in non-positional format of string resource string/format_minutes_seconds. Did you mean to add the formatted="false" attribute?
+/home/runner/.gradle/caches/9.8.2/transforms/250b7b8c310a188ec9146c0e0fe2d48c/transformed/onyxsdk-base-1.8.9/res/values-hu/values-hu.xml:31:4: Multiple substitutions specified in non-positional format of string resource string/format_minutes_seconds. Did you mean to add the formatted="false" attribute?
+/home/runner/.gradle/caches/9.8.2/transforms/250b7b8c310a188ec9146c0e0fe2d48c/transformed/onyxsdk-base-1.8.9/res/values-zh-rHK/values-zh-rHK.xml:41:4: Multiple substitutions specified in non-positional format of string resource string/format_minutes_seconds. Did you mean to add the formatted="false" attribute?
+/home/runner/.gradle/caches/9.8.2/transforms/250b7b8c310a188ec9146c0e0fe2d48c/transformed/onyxsdk-base-1.8.9/res/values-iw/values-iw.xml:32:4: Multiple substitutions specified in non-positional format of string resource string/format_minutes_seconds. Did you mean to add the formatted="false" attribute?
+/home/runner/.gradle/caches/9.8.2/transforms/250b7b8c310a188ec9146c0e0fe2d48c/transformed/onyxsdk-base-1.8.9/res/values-bg/values-bg.xml:31:4: Multiple substitutions specified in non-positional format of string resource string/format_minutes_seconds. Did you mean to add the formatted="false" attribute?
+/home/runner/.gradle/caches/9.8.2/transforms/14c6e10d95c6dfdd43060f7019589b2b/transformed/ui/res/values-tr/values-tr.xml:8:4: Multiple substitutions specified in non-positional format of string resource string/format_minutes_seconds. Did you mean to add the formatted="false" attribute?
+/home/runner/.gradle/caches/9.8.2/transforms/14c6e10d95c6dfdd43060f7019589b2b/transformed/ui/res/values-fr/values-fr.xml:8:4: Multiple substitutions specified in non-positional format of string resource string/format_minutes_seconds. Did you mean to add the formatted="false" attribute?
+/home/runner/.gradle/caches/9.8.2/transforms/250b7b8c310a188ec9146c0e0fe2d48c/transformed/onyxsdk-base-1.8.9/res/values-zh-rTW/values-zh-rTW.xml:33:4: Multiple substitutions specified in non-positional format of string resource string/format_minutes_seconds. Did you mean to add the formatted="false" attribute?
+/home/runner/.gradle/caches/9.8.2/transforms/250b7b8c310a188ec9146c0e0fe2d48c/transformed/onyxsdk-base-1.8.9/res/values-zh-rCN/values-zh-rCN.xml:32:4: Multiple substitutions specified in non-positional format of string resource string/format_minutes_seconds. Did you mean to add the formatted="false" attribute?
+
+> Task :app:kspDebugKotlin
+> Task :app:mergeExtDexDebug
+> Task :app:mergeLibDexDebug
+
+> Task :app:kspDebugKotlin
+w: [ksp] /home/runner/work/notable/notable/app/src/main/java/com/ethran/notable/data/db/Image.kt:75: The DAO function return type (kotlin.collections.List<kotlin.String?>) with the nullable type argument is meaningless because for now Room will never put a null value in a result.
+
+> Task :app:mergeDebugResources
+/home/runner/.gradle/caches/9.8.2/transforms/14c6e10d95c6dfdd43060f7019589b2b/transformed/ui/res/values-ro/values-ro.xml:8:4: Multiple substitutions specified in non-positional format of string resource string/format_minutes_seconds. Did you mean to add the formatted="false" attribute?
+/home/runner/.gradle/caches/9.8.2/transforms/14c6e10d95c6dfdd43060f7019589b2b/transformed/ui/res/values-ms/values-ms.xml:8:4: Multiple substitutions specified in non-positional format of string resource string/format_minutes_seconds. Did you mean to add the formatted="false" attribute?
+/home/runner/.gradle/caches/9.8.2/transforms/250b7b8c310a188ec9146c0e0fe2d48c/transformed/onyxsdk-base-1.8.9/res/values/values.xml:47:4: Multiple substitutions specified in non-positional format of string resource string/format_minutes_seconds. Did you mean to add the formatted="false" attribute?
+/home/runner/.gradle/caches/9.8.2/transforms/250b7b8c310a188ec9146c0e0fe2d48c/transformed/onyxsdk-base-1.8.9/res/values-ar/values-ar.xml:31:4: Multiple substitutions specified in non-positional format of string resource string/format_minutes_seconds. Did you mean to add the formatted="false" attribute?
+/home/runner/.gradle/caches/9.8.2/transforms/250b7b8c310a188ec9146c0e0fe2d48c/transformed/onyxsdk-base-1.8.9/res/values-vi/values-vi.xml:31:4: Multiple substitutions specified in non-positional format of string resource string/format_minutes_seconds. Did you mean to add the formatted="false" attribute?
+
+> Task :app:processDebugManifest
+> Task :app:compileDebugKotlin
+> Task :app:processDebugManifestForPackage
+> Task :app:mergeDebugJniLibFolders
+> Task :app:processDebugResources
+> Task :app:mergeDebugNativeLibs
+
+> Task :app:stripDebugDebugSymbols
+Unable to strip the following libraries, packaging them as they are: libandroidx.graphics.path.so, libc++_shared.so, libdatastore_shared_counter.so, libdigitalink.so, libgraphics-core.so, libmupdf_java.so, libneopen_jni.so, libonyx_pen_touch_reader.so. Run with --info option to learn more.
+
+> Task :app:validateSigningDebug
+> Task :app:writeDebugAppMetadata
+> Task :app:writeDebugSigningConfigVersions
+
+> Task :app:compileDebugKotlin FAILED
+e: file:///home/runner/work/notable/notable/app/src/main/java/com/ethran/notable/daybook/DigestView.kt:213:14 Unresolved reference 'noRippleClickable' on receiver of type 'Modifier'.
+e: file:///home/runner/work/notable/notable/app/src/main/java/com/ethran/notable/daybook/DigestView.kt:264:30 Unresolved reference 'noRippleClickable' on receiver of type 'Modifier'.
+gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/__run-1795311048103.json
+
+[Incubating] Problems report is available at: file:///home/runner/work/notable/notable/build/reports/problems/problems-report.html
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':app:compileDebugKotlin' (registered by plugin 'com.android.internal.application').
+> A failure occurred while executing org.jetbrains.kotlin.compilerRunner.btapi.BuildToolsApiCompilationWork
+   > Kotlin compiler: UNRESOLVED_REFERENCE
+       Kotlin compiler error
+         Unresolved reference 'noRippleClickable' on receiver of type 'Modifier'.
+         Location: /home/runner/work/notable/notable/app/src/main/java/com/ethran/notable/daybook/DigestView.kt:213
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights from a Build Scan (powered by Develocity).
+> Get more help at https://help.gradle.org.
+
+Deprecated Gradle features were used in this build, making it incompatible with Gradle 10.
+
+You can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.
+
+For more on this, please refer to https://docs.gradle.org/9.8.2/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
+
+BUILD FAILED in 4m 35s
+33 actionable tasks: 33 executed
+Configuration cache entry stored.
