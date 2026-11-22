@@ -47,6 +47,8 @@ class Heading(
     @ColumnInfo(defaultValue = "0") val done: Boolean = false,
     /** What the handwriting says, as read by the recognizer; for search and to-do lists. */
     val text: String? = null,
+    /** For a heading: 1 main heading, 2 sub-heading, 3 minor heading. */
+    @ColumnInfo(defaultValue = "1") val level: Int = 1,
 ) {
     companion object {
         const val KIND_HEADING = "heading"
@@ -94,6 +96,9 @@ interface MarkDao {
 
     @Query("SELECT * FROM heading WHERE kind = 'task' AND done = 0 ORDER BY day, createdAt")
     fun openTasks(): Flow<List<Heading>>
+
+    @Query("UPDATE heading SET level = :level WHERE id = :id")
+    suspend fun setLevel(id: String, level: Int)
 
     @Query("UPDATE heading SET done = :done WHERE id = :id")
     suspend fun setDone(id: String, done: Boolean)

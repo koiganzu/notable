@@ -35,6 +35,9 @@ interface GestureActions {
      */
     fun setHoldErase(active: Boolean) {}
 
+    /** A single one-finger tap at [position] (screen coordinates): follows a link there. */
+    fun onSingleTap(position: Offset) {}
+
     /** Show the Contents panel (headings and bookmarks). */
     fun openContents() {}
 

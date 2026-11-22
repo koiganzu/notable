@@ -103,6 +103,16 @@ fun SelectedBitmap(
     var isPickingLink by remember { mutableStateOf(false) }
     var isPickingPlannerDay by remember { mutableStateOf(false) }
     var isPickingTaskDay by remember { mutableStateOf(false) }
+    var isPickingLevel by remember { mutableStateOf(false) }
+    if (isPickingLevel) {
+        HeadingLevelDialog(
+            onPick = { level ->
+                isPickingLevel = false
+                controlTower.markSelectionAsHeading(level)
+            },
+            onDismiss = { isPickingLevel = false },
+        )
+    }
     var isPickingTaskDate by remember { mutableStateOf(false) }
     // Convert to text: a reading in progress, then its result (a leading \u0000 marks a problem).
     var isReading by remember { mutableStateOf(false) }
@@ -259,7 +269,7 @@ fun SelectedBitmap(
                     ToolbarButton(
                         vectorIcon = FeatherIcons.Hash,
                         isSelected = false,
-                        onSelect = { controlTower.markSelectionAsHeading() },
+                        onSelect = { isPickingLevel = true },
                         contentDescription = "Mark as heading",
                         modifier = Modifier.height(BUTTON_SIZE.dp)
                     )
@@ -562,4 +572,44 @@ private fun DialogPill(label: String, filled: Boolean = false, onClick: () -> Un
             .noRippleClickable { onClick() }
             .padding(horizontal = 20.dp, vertical = 9.dp)
     )
+}
+
+
+/** Main heading, sub-heading or minor heading: sets the indent in Contents. */
+@Composable
+private fun HeadingLevelDialog(onPick: (Int) -> Unit, onDismiss: () -> Unit) {
+    val panel = RoundedCornerShape(16.dp)
+    Dialog(onDismissRequest = onDismiss) {
+        Column(
+            Modifier
+                .width(380.dp)
+                .background(Color.White, panel)
+                .border(2.dp, Color.Black, panel)
+                .padding(18.dp)
+        ) {
+            Text("Add heading", fontSize = 22.sp, fontWeight = FontWeight.Bold)
+            Spacer(Modifier.height(10.dp))
+            listOf(
+                Triple(1, "Main heading", 21.sp),
+                Triple(2, "Sub-heading", 18.sp),
+                Triple(3, "Minor heading", 16.sp),
+            ).forEach { (level, label, size) ->
+                Text(
+                    label,
+                    fontSize = size,
+                    fontWeight = if (level == 1) FontWeight.Bold else FontWeight.Normal,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .noRippleClickable { onPick(level) }
+                        .padding(start = ((level - 1) * 22).dp, top = 13.dp, bottom = 13.dp)
+                )
+                Box(
+                    Modifier
+                        .fillMaxWidth()
+                        .height(1.dp)
+                        .background(Color.Gray)
+                )
+            }
+        }
+    }
 }

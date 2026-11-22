@@ -72,6 +72,7 @@ fun ContentsPanel(
             onClose = close,
             onToggleBookmark = { viewModel.onToolbarAction(ToolbarAction.ToggleBookmark) },
             onDeleteHeading = viewModel::deleteHeading,
+            onSetLevel = viewModel::setHeadingLevel,
             onOpenLink = { target ->
                 close()
                 viewModel.openLink(target)
@@ -121,6 +122,7 @@ private fun ContentsPanelBody(
     onClose: () -> Unit,
     onToggleBookmark: () -> Unit,
     onDeleteHeading: (String) -> Unit,
+    onSetLevel: (String, Int) -> Unit,
     onOpenLink: (String) -> Unit,
     onJump: (pageId: String, top: Int?) -> Unit,
     modifier: Modifier = Modifier,
@@ -201,12 +203,45 @@ private fun ContentsPanelBody(
                         EmptyNote("No headings yet. Lasso some handwriting, then tap the # button.")
                     }
                     contents.headings.forEach { heading ->
-                        HeadingRow(
-                            heading = heading,
-                            isCurrentPage = heading.pageId == currentPageId,
-                            onOpen = { onJump(heading.pageId, heading.top) },
-                            onDelete = { onDeleteHeading(heading.id) },
-                        )
+                        val isHeading = heading.kind == com.ethran.notable.data.db.Heading.KIND_HEADING
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.padding(
+                                start = if (isHeading) ((heading.level - 1) * 26).dp else 0.dp
+                            )
+                        ) {
+                            if (isHeading) {
+                                // Tap to change the level: main, sub, minor, back to main.
+                                Text(
+                                    "H${heading.level}",
+                                    fontSize = 13.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = if (heading.level == 1) Color.White else Color.Black,
+                                    modifier = Modifier
+                                        .padding(end = 8.dp)
+                                        .background(
+                                            if (heading.level == 1) Color.Black else Color.White,
+                                            androidx.compose.foundation.shape.RoundedCornerShape(6.dp)
+                                        )
+                                        .border(
+                                            2.dp, Color.Black,
+                                            androidx.compose.foundation.shape.RoundedCornerShape(6.dp)
+                                        )
+                                        .noRippleClickable {
+                                            onSetLevel(heading.id, heading.level % 3 + 1)
+                                        }
+                                        .padding(horizontal = 6.dp, vertical = 3.dp)
+                                )
+                            }
+                            Box(Modifier.weight(1f)) {
+                                HeadingRow(
+                                    heading = heading,
+                                    isCurrentPage = heading.pageId == currentPageId,
+                                    onOpen = { onJump(heading.pageId, heading.top) },
+                                    onDelete = { onDeleteHeading(heading.id) },
+                                )
+                            }
+                        }
                     }
                 }
 

@@ -174,6 +174,12 @@ data class HeadingItem(
     val target: String? = null,
     val targetTitle: String? = null,
     val done: Boolean = false,
+    /** Heading level: 1 main, 2 sub, 3 minor. */
+    val level: Int = 1,
+    /** Where it sits on its page, in page coordinates, for tapping links. */
+    val left: Int = 0,
+    val right: Int = 0,
+    val bottom: Int = 0,
 )
 
 /** One bookmarked page in the Contents panel. */
@@ -399,6 +405,10 @@ class EditorViewModel @Inject constructor(
                     }.getOrNull(),
                     kind = heading.kind,
                     done = heading.done,
+                    level = heading.level,
+                    left = heading.left,
+                    right = heading.right,
+                    bottom = heading.bottom,
                     target = heading.target,
                     targetTitle = heading.target?.let { titles.getOrPut(it) {
                         if (it.startsWith(DAY_LINK)) "Planner, " + plannerDayLabel(it)
@@ -474,6 +484,7 @@ class EditorViewModel @Inject constructor(
         kind: String = Heading.KIND_HEADING,
         day: String? = null,
         target: String? = null,
+        level: Int = 1,
     ) {
         val rect = selectionState.selectionRect
         val bitmap = selectionState.selectedBitmap
@@ -512,6 +523,7 @@ class EditorViewModel @Inject constructor(
                         kind = kind,
                         day = day,
                         target = target,
+                        level = level,
                     )
                 markDao.insertHeading(heading)
                 showHint(
@@ -645,6 +657,20 @@ class EditorViewModel @Inject constructor(
                 log.e("Failed to save digest from selection", e)
                 showHint("Couldn't save to Digest")
             }
+        }
+    }
+
+    fun setHeadingLevel(id: String, level: Int) {
+        viewModelScope.launch(Dispatchers.IO) { markDao.setLevel(id, level.coerceIn(1, 3)) }
+    }
+
+    /** The link on the open page under [x], [y] (page coordinates), if any. */
+    fun linkAt(x: Float, y: Float): HeadingItem? {
+        val pageId = currentPageId
+        val slack = 12
+        return contentsState.value.links.firstOrNull {
+            it.pageId == pageId && x >= it.left - slack && x <= it.right + slack &&
+                    y >= it.top - slack && y <= it.bottom + slack
         }
     }
 

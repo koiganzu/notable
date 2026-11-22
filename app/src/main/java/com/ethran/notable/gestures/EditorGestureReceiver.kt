@@ -355,6 +355,7 @@ private suspend fun AwaitPointerEventScope.handleGestureEnd(
                 dispatchEvent(GestureEvent.DoubleTap, ctx)
                 return
             }
+            recognizer.tracker.lastPosition()?.let { ctx.actions.onSingleTap(it) }
         } else {
             dispatchEvent(event, ctx)
         }

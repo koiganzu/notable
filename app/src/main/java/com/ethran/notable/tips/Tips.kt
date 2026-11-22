@@ -77,13 +77,14 @@ object Tips {
 
         Tip("sel_heading", TipPlace.Selection, "# turns this into a heading, so you can jump to it from Contents. The key makes it a keyword."),
         Tip("sel_date", TipPlace.Selection, "The calendar button ties this to a date. It then shows up on Today for that day."),
-        Tip("sel_link", TipPlace.Selection, "The chain button links this to another notebook or to a day's planner page. Follow it later from Contents, under Links."),
+        Tip("sel_link", TipPlace.Selection, "The chain button links this to another notebook or to a day's planner page. Tap the dashed box on the page with a finger to follow it, or use Contents, under Links."),
         Tip("sel_digest", TipPlace.Selection, "Over a PDF, the book button copies the printed text underneath into Digest."),
         Tip("sel_task", TipPlace.Selection, "The tick box adds this to your to-do list, with a due date if you like. To-dos show on Today until you tick them off."),
         Tip("sel_text", TipPlace.Selection, "The T button turns this handwriting into typed text, to copy or save to Digest."),
         Tip("sel_sticker", TipPlace.Selection, "The star saves this as a sticker. Stamp it on any page from the smiley on the tool panel."),
         Tip("sel_move", TipPlace.Selection, "Drag the selection to move it. Double-tap it to make a copy."),
 
+        Tip("con_levels", TipPlace.Contents, "Tap H1, H2 or H3 beside a heading to change its level and build an outline."),
         Tip("con_jump", TipPlace.Contents, "Tap any entry to jump straight to it. Swipe the panel left to close it."),
         Tip("con_bookmark", TipPlace.Contents, "The button at the bottom bookmarks the page you are on."),
 

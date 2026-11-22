@@ -271,7 +271,18 @@ class EditorControlTower(
         viewModel.onToolbarAction(ToolbarAction.ToggleBookmark)
 
     /** Adds the current selection to the notebook's Contents as a heading. */
-    fun markSelectionAsHeading() = viewModel.addHeadingFromSelection()
+    fun markSelectionAsHeading(level: Int = 1) = viewModel.addHeadingFromSelection(level = level)
+
+    override fun onSingleTap(position: Offset) {
+        val viewport = page.viewport.value
+        val x = position.x / viewport.zoom + viewport.scroll.x
+        val y = position.y / viewport.zoom + viewport.scroll.y
+        val link = viewModel.linkAt(x, y) ?: return
+        link.target?.let {
+            showHint("Opening ${link.targetTitle ?: "link"}")
+            viewModel.openLink(it)
+        }
+    }
 
     /** Links the current selection to another notebook. */
     fun linkSelectionTo(notebookId: String) =

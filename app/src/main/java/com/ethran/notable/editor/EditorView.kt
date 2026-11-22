@@ -1,5 +1,6 @@
 package com.ethran.notable.editor
 
+import com.ethran.notable.editor.ui.LinkMarks
 import com.ethran.notable.tips.TipPlace
 import com.ethran.notable.tips.TipHint
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -240,6 +241,7 @@ fun EditorView(
                 page = page,
                 history = history
             )
+            LinkMarks(viewModel = viewModel, page = page)
             SelectedBitmap(
                 context = context, controlTower = editorControlTower
             )
